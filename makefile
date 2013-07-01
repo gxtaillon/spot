@@ -18,4 +18,4 @@ test-extract:
 
 test-gui:
 	cd classes; \
-	cat ../Demo.spo | java $(grun) SPOT spClass -gui
+	cat ../Demo.spo | java $(grun) SPOT start -gui

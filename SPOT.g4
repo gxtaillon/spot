@@ -19,12 +19,16 @@ InputCharacter
     ;
 
 /* SourcePawn */
+start
+    : (PpAll
+    | spClassDeclaration)*
+    ;
+
 
 
 /* - Preprocessor directives */
 PpAll
-    : '#' .*? LineTerminator 
-    -> skip
+    : '#' .*? LineTerminator
     ;
 
 /* - Pawn */
@@ -34,17 +38,45 @@ tag
     | 'Bool'
     ;
 
-variableBase
-    : (tag ':')? Identifier ('[' InputCharacter+ ']')?
+accessQualifier
+    : 'public'
+    | 'protected'
+    | 'private'
+    ;    
+
+variableDeclaration
+    : accessQualifier? (tag ':')? Identifier ('[' InputCharacter+ ']')?
+    ;
+
+variableDeclarationList
+    : variableDeclaration ','
+    | variableDeclarationList variableDeclaration ','
+    ;
+
+fonctionDeclarationHead
+    : accessQualifier? (tag ':')? Identifier '(' variableDeclarationList? ')'
+    ;
+
+fonctionDeclarationBody
+    : '{' .*? '}'
+    ;
+
+fonctionDeclaration
+    : fonctionDeclarationHead (fonctionDeclarationBody | ';')
     ;
 
 /* - Object Translator */
-spClassVariableList
-    : variableBase ';'
-    | spClassVariableList variableBase ';'
+spClassVariableDeclarationList
+    : variableDeclaration ';'
+    | spClassVariableDeclarationList variableDeclaration ';'
     ;
 
-spClass 
-    : 'class' Identifier '{' spClassVariableList '}' ';' 
+spClassFonctionDeclarationList
+    : fonctionDeclaration
+    | spClassFonctionDeclarationList fonctionDeclaration
+    ;
+
+spClassDeclaration
+    : 'class' Identifier '{' spClassVariableDeclarationList spClassFonctionDeclarationList '}' ';' 
     ;
 

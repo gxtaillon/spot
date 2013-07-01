@@ -10,7 +10,7 @@ public class ExtractPawnTool {
     CommonTokenStream tokens = new CommonTokenStream(lexer);
     // create a parser that feeds off the tokens buffer
     SPOTParser parser = new SPOTParser(tokens);
-    ParseTree tree = parser.spClass(); // begin parsing at init rule
+    ParseTree tree = parser.start(); // begin parsing at init rule
     ParseTreeWalker walker = new ParseTreeWalker(); // create standard walker
     ExtractPawnListener extractor = new ExtractPawnListener(parser);
     walker.walk(extractor, tree); // initiate walk of tree with listener
