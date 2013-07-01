@@ -219,43 +219,28 @@ tagSpecifier
 typeSpecifier
     :   tagSpecifier
     |   enumSpecifier
+    |   classSpecifier
     ;
 
-structOrUnionSpecifier
-    :   structOrUnion Identifier? '{' structDeclarationList '}'
-    |   structOrUnion Identifier
+classSpecifier
+    :   'class' Identifier '{' classDeclarationList? '}'
+    |   'class' Identifier
     ;
 
-structOrUnion
-    :   'struct'
-    |   'union'
+classDeclarationList
+    :   classDeclaration
+    |   classDeclarationList classDeclaration
     ;
 
-structDeclarationList
-    :   structDeclaration
-    |   structDeclarationList structDeclaration
-    ;
-
-structDeclaration
-    :   specifierQualifierList structDeclaratorList? ';'
-    |   staticAssertDeclaration
+classDeclaration
+    :   tagSpecifier? identifierList ';'
+    |   functionDefinition
     ;
 
 specifierQualifierList
     :   typeSpecifier specifierQualifierList?
     |   typeQualifier specifierQualifierList?
     ;
-
-structDeclaratorList
-    :   structDeclarator
-    |   structDeclaratorList ',' structDeclarator
-    ;
-
-structDeclarator
-    :   declarator
-    |   declarator? ':' constantExpression
-    ;
-
 enumSpecifier
     :   'enum' Identifier? '{' enumeratorList '}'
     |   'enum' Identifier? '{' enumeratorList ',' '}'

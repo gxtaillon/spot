@@ -18,4 +18,4 @@ test-extract:
 
 test-gui:
 	cd classes; \
-	cat ../Demo1.sp | java $(grun) SPOT compilationUnit -gui
+	cat ../Demo1.spo | java $(grun) SPOT compilationUnit -gui

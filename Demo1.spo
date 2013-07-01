@@ -1,5 +1,6 @@
 class Demo {
     myValue;
+    Bool:truth1, truth2;
 
     public getMyValue() { 
         return this.myValue; 
