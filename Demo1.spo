@@ -1,10 +1,14 @@
 class Demo {
-    a; b;
-    Float:c;
-    protected Gibberish:d;
+    myValue;
 
-    public Test();
-    private Gibberish:Test2()
-    { askjdbaskjbdkajsbdkbaskjdb }
-    private Gibberish:Test3(aa, bb, Float:cc, Gibberish:dd);
+    public getMyValue() { 
+        return this.myValue; 
+    }
 };
+
+Bool:testObject() {
+    new Demo:myDemo;
+    myDemo.myValue = 123;
+    new aValue = myDemo.myValue;
+    printf("%b", aValue == myDemo.getMyValue());
+}

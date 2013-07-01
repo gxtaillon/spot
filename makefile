@@ -14,8 +14,8 @@ all: | clean build
 
 test-extract:
 	cd classes; \
-	cat ../Demo.spo | java ExtractPawnTool
+	cat ../Demo1.spo | java ExtractPawnTool
 
 test-gui:
 	cd classes; \
-	cat ../Demos.spo | java $(grun) SPOT compilationUnit -gui
+	cat ../Demo1.sp | java $(grun) SPOT compilationUnit -gui
