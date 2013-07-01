@@ -1,6 +1,14 @@
+#include <sourcemod>
+#include <sdktools>
+#pragma semicolon 1
+
+#define PLUGIN_NAME		"SPOT Demo"
+#define PLUGIN_VERSION	"0.1"
+
 class Demo {
     a; b;
     Float:c;
     Gibberish:d;
 };
-    
+
+
