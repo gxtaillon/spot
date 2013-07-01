@@ -1,0 +1,6 @@
+class Demo {
+    a; b;
+    Float:c;
+    Gibberish:d;
+};
+    
