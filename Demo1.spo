@@ -1,0 +1,10 @@
+class Demo {
+    a; b;
+    Float:c;
+    protected Gibberish:d;
+
+    public Test();
+    private Gibberish:Test2()
+    { askjdbaskjbdkajsbdkbaskjdb }
+    private Gibberish:Test3(aa, bb, Float:cc, Gibberish:dd);
+};

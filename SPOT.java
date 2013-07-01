@@ -10,7 +10,7 @@ public class SPOT {
     CommonTokenStream tokens = new CommonTokenStream(lexer);
     // create a parser that feeds off the tokens buffer
     SPOTParser parser = new SPOTParser(tokens);
-    ParseTree tree = parser.spClassDeclaration(); // begin parsing at init rule
+    ParseTree tree = parser.compilationUnit(); // begin parsing at init rule
     System.out.println(tree.toStringTree(parser)); // print LISP-style tree
   }
 }
