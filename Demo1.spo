@@ -10,5 +10,5 @@ Bool:testObject() {
     new Demo:myDemo;
     myDemo.myValue = 123;
     new aValue = myDemo.myValue;
-    printf("%b", aValue == myDemo.getMyValue());
+    return aValue == myDemo.getMyValue();
 }
