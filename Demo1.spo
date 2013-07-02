@@ -2,7 +2,7 @@ class Demo {
     myValue;
     Bool:truth1, truth2;
 
-    public getMyValue() { 
+    public getMyValue(Demo:this) { 
         return this.myValue; 
     }
 };

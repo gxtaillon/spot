@@ -14,5 +14,6 @@ public class ExtractPawnTool {
     ParseTreeWalker walker = new ParseTreeWalker(); // create standard walker
     ExtractPawnListener extractor = new ExtractPawnListener(parser);
     walker.walk(extractor, tree); // initiate walk of tree with listener
+    System.out.println(extractor.getOutput());
   }
 }

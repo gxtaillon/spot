@@ -55,11 +55,19 @@ genericAssociation
     |   'default' ':' assignmentExpression
     ;
 
+postfixExpressionDot
+    : '.' Identifier
+    ;
+
+postfixExpressionArgs
+    : '(' argumentExpressionList? ')'
+    ;
+
 postfixExpression
     :   primaryExpression
     |   postfixExpression '[' expression ']'
-    |   postfixExpression '(' argumentExpressionList? ')'
-    |   postfixExpression '.' Identifier
+    |   postfixExpression postfixExpressionArgs
+    |   postfixExpression postfixExpressionDot
     |   postfixExpression '->' Identifier
     |   postfixExpression '++'
     |   postfixExpression '--'
@@ -89,72 +97,94 @@ unaryOperator
     :   '&' | '*' | '+' | '-' | '~' | '!'
     ;
 
+lpar : '(' ;
+rpar : ')' ;
 castExpression
     :   unaryExpression
-    |   '(' typeName ')' castExpression
-    |   '__extension__' '(' typeName ')' castExpression
+    |   lpar typeName rpar castExpression
+    |   '__extension__' lpar typeName rpar castExpression
     ;
 
+star : '*' ;
+div : '/' ;
+mod : '%' ;
 multiplicativeExpression
     :   castExpression
-    |   multiplicativeExpression '*' castExpression
-    |   multiplicativeExpression '/' castExpression
-    |   multiplicativeExpression '%' castExpression
+    |   multiplicativeExpression star castExpression
+    |   multiplicativeExpression div castExpression
+    |   multiplicativeExpression mod castExpression
     ;
 
+plus : '+' ;
+minus : '-' ;
 additiveExpression
     :   multiplicativeExpression
-    |   additiveExpression '+' multiplicativeExpression
-    |   additiveExpression '-' multiplicativeExpression
+    |   additiveExpression plus multiplicativeExpression
+    |   additiveExpression minus multiplicativeExpression
     ;
 
+shiftl : '<<' ;
+shiftr : '>>' ;
 shiftExpression
     :   additiveExpression
-    |   shiftExpression '<<' additiveExpression
-    |   shiftExpression '>>' additiveExpression
+    |   shiftExpression shiftl additiveExpression
+    |   shiftExpression shiftr additiveExpression
     ;
 
+less : '<' ;
+more : '>' ;
+leeq : '<=' ;
+moeq : '>=' ;
 relationalExpression
     :   shiftExpression
-    |   relationalExpression '<' shiftExpression
-    |   relationalExpression '>' shiftExpression
-    |   relationalExpression '<=' shiftExpression
-    |   relationalExpression '>=' shiftExpression
+    |   relationalExpression less shiftExpression
+    |   relationalExpression more shiftExpression
+    |   relationalExpression leeq shiftExpression
+    |   relationalExpression moeq shiftExpression
     ;
 
+eqeq : '==' ;
+noteq : '!=' ;
 equalityExpression
     :   relationalExpression
-    |   equalityExpression '==' relationalExpression
-    |   equalityExpression '!=' relationalExpression
+    |   equalityExpression eqeq relationalExpression
+    |   equalityExpression noteq relationalExpression
     ;
 
+and : '&' ;
 andExpression
     :   equalityExpression
-    |   andExpression '&' equalityExpression
+    |   andExpression and equalityExpression
     ;
 
+caret : '^' ;
 exclusiveOrExpression
     :   andExpression
-    |   exclusiveOrExpression '^' andExpression
+    |   exclusiveOrExpression caret andExpression
     ;
 
+or : '|' ;
 inclusiveOrExpression
     :   exclusiveOrExpression
-    |   inclusiveOrExpression '|' exclusiveOrExpression
+    |   inclusiveOrExpression or exclusiveOrExpression
     ;
 
+andand : '&&' ;
 logicalAndExpression
     :   inclusiveOrExpression
-    |   logicalAndExpression '&&' inclusiveOrExpression
+    |   logicalAndExpression andand inclusiveOrExpression
     ;
 
+oror : '||' ;
 logicalOrExpression
     :   logicalAndExpression
-    |   logicalOrExpression '||' logicalAndExpression
+    |   logicalOrExpression oror logicalAndExpression
     ;
 
+question : '?' ;
+semi : ':' ;
 conditionalExpression
-    :   logicalOrExpression ('?' expression ':' conditionalExpression)?
+    :   logicalOrExpression (question expression semi conditionalExpression)?
     ;
 
 assignmentExpression
@@ -202,9 +232,10 @@ initDeclaratorList
     |   initDeclaratorList ',' initDeclarator
     ;
 
+eq : '=' ;
 initDeclarator
     :   declarator
-    |   declarator '=' initializer
+    |   declarator eq initializer
     ;
 
 storageClassSpecifier
@@ -466,11 +497,10 @@ iterationStatement
     ;
 
 jumpStatement
-    :   'goto' Identifier ';'
-    |   'continue' ';'
-    |   'break' ';'
-    |   'return' expression? ';'
-    |   'goto' unaryExpression ';' // GCC extension
+    :   Goto Identifier ';'
+    |   Continue ';'
+    |   Break ';'
+    |   Return expression? ';'
     ;
 
 compilationUnit
