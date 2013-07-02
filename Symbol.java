@@ -1,9 +1,9 @@
-public class Environment {
+public class Symbol {
     public String symbol;
     public SymbolType type;
 
 
-    public Environment(String _symbol, SymbolType _type) {
+    public Symbol(String _symbol, SymbolType _type) {
         symbol = _symbol;
         type = _type;
     }

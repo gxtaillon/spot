@@ -7,26 +7,27 @@ import java.util.*;
 public class ExtractPawnListener extends SPOTBaseListener {
     final String CURRENT_SYMBOL = "__CURRENT_SYMBOL";
     final String CURRENT_UNRESOLVED_CLASS = "__CURRENT_UNRESOLVED_CLASS";
+    final String CURRENT_CLASS = "__CURRENT_CLASS";
     StringBuilder sb;
     SPOTParser parser;
     Stack<String> tags;
     boolean isClass, isExitingClass;
-    boolean isFunc, isParameter, isDeclaration, isPostfixArgs;
+    boolean isFunc, isParameter, isDeclaration, isPostfixArgs, isFunctionDeclarator;
     StringBuilder csb; // the current class's functions sb. 
     //  When enter/exit'ing a function sb and csb will switch places to prevent 
     //      writing functions inside the enum.
-    Stack<HashMap<String, Environment>> environments;
+    Stack<HashMap<String, Symbol>> environments;
 
     protected String enumOfClass(String className) {
         return "SPClass_"+className;
     }
 
     protected String functionOfMember(String className, String memberName) {
-        return enumOfClass(className) + "_" + memberName;
+        return className + "_" + memberName;
     }
 
     protected String variableOfMember(String className, String memberName) {
-        return enumOfClass(className) + ":" + memberName;
+        return className + ":" + memberName;
     }
 
     protected String asis(ParserRuleContext ctx) {
@@ -37,15 +38,21 @@ public class ExtractPawnListener extends SPOTBaseListener {
         return tmp;
     }
 
-    protected HashMap<String, Environment> getCurrentEnv() {
+    protected HashMap<String, Symbol> getCurrentEnv() {
         return environments.peek();
     }
     
-    protected HashMap<String, Environment> createNewEnv() {
-        HashMap<String, Environment> cur = getCurrentEnv();
-        HashMap<String, Environment> newEnv = new HashMap<String, Environment>();
-        cur.putAll(newEnv);
+    protected HashMap<String, Symbol> createNewEnv() {
+        HashMap<String, Symbol> cur = getCurrentEnv();
+        HashMap<String, Symbol> newEnv = new HashMap<String, Symbol>();
+        newEnv.putAll(cur);
         environments.push(newEnv);
+
+//System.out.println("newenv post");
+//for (String name: getCurrentEnv().keySet()){
+//            String value = getCurrentEnv().get(name).toString();  
+//            System.out.println(name + "::" + value);  
+//} 
         return newEnv;
     }
 
@@ -59,8 +66,8 @@ public class ExtractPawnListener extends SPOTBaseListener {
         this.csb = new StringBuilder();
         this.tags = new Stack<String>();
         this.tags.push("");
-        this.environments = new Stack<HashMap<String, Environment>>();
-        this.environments.push(new HashMap<String, Environment>());
+        this.environments = new Stack<HashMap<String, Symbol>>();
+        this.environments.push(new HashMap<String, Symbol>());
     }
 
     public String getOutput() {
@@ -103,16 +110,26 @@ public class ExtractPawnListener extends SPOTBaseListener {
 
             getCurrentEnv().put(
                 tokens.getText(ctx.directDeclarator()), 
-                new Environment(className, SymbolType.Variable));
+                new Symbol(className, SymbolType.Variable));
             getCurrentEnv().remove(CURRENT_UNRESOLVED_CLASS);
         }
+    }
+
+	@Override 
+    public void enterFunctionDeclarator(SPOTParser.FunctionDeclaratorContext ctx) {
+        isFunctionDeclarator = true;
+    }
+
+	@Override 
+    public void exitFunctionDeclarator(SPOTParser.FunctionDeclaratorContext ctx) {
+        isFunctionDeclarator = false;
     }
 
 	@Override 
     public void enterTagSpecifier(SPOTParser.TagSpecifierContext ctx) {
         getCurrentEnv().put(
             CURRENT_UNRESOLVED_CLASS, 
-            new Environment(enumOfClass(ctx.Identifier().toString()), SymbolType.Variable));
+            new Symbol(enumOfClass(ctx.Identifier().toString()), SymbolType.Variable));
     }
 
 	@Override 
@@ -124,8 +141,13 @@ public class ExtractPawnListener extends SPOTBaseListener {
     public void enterClassSpecifier(SPOTParser.ClassSpecifierContext ctx) {
         isClass = true;
         sb.append("enum ");
-        sb.append(enumOfClass(ctx.Identifier().toString()));
+        String className = enumOfClass(ctx.Identifier().toString());
+        sb.append(className);
         sb.append(" {\n");
+
+        getCurrentEnv().put(
+            CURRENT_CLASS,
+            new Symbol(className, SymbolType.Variable));
     }
 
 	@Override
@@ -133,6 +155,7 @@ public class ExtractPawnListener extends SPOTBaseListener {
         sb.append("};\n");
         sb.append(csb);
         csb.delete(0, csb.length());
+        getCurrentEnv().remove(CURRENT_CLASS);
         isClass = false;
         isExitingClass = true;
     }
@@ -167,7 +190,7 @@ public class ExtractPawnListener extends SPOTBaseListener {
 	@Override 
     public void enterFunctionDefinition(SPOTParser.FunctionDefinitionContext ctx) {
         isFunc = true;
-        createNewEnv();
+        //createNewEnv();
         StringBuilder tmp;
         if (isClass) {
             tmp = sb;
@@ -184,7 +207,7 @@ public class ExtractPawnListener extends SPOTBaseListener {
             sb = csb;
             csb = tmp;
         }
-        restoreEnv();
+        //restoreEnv();
         isFunc = false;
     }
     
@@ -204,7 +227,7 @@ public class ExtractPawnListener extends SPOTBaseListener {
 
             getCurrentEnv().put(
                 tokens.getText(ctx.declarator()), 
-                new Environment(className, SymbolType.Variable));
+                new Symbol(className, SymbolType.Variable));
             getCurrentEnv().remove(CURRENT_UNRESOLVED_CLASS);
         }
         isParameter = false;
@@ -218,7 +241,14 @@ public class ExtractPawnListener extends SPOTBaseListener {
 	@Override 
     public void enterDirectDeclarator(SPOTParser.DirectDeclaratorContext ctx) {
         if (ctx.Identifier() != null) {
-            asis(ctx);
+            String id = asis(ctx);
+            if (isClass && isFunctionDeclarator) {
+                Symbol env = getCurrentEnv().get(CURRENT_CLASS);
+                String className = env.symbol;
+                getCurrentEnv().put(
+                    id,
+                    new Symbol(functionOfMember(className, id), SymbolType.Function));
+            }
         }
     }
 
@@ -272,17 +302,33 @@ public class ExtractPawnListener extends SPOTBaseListener {
         if (getCurrentEnv().containsKey(symbol)) {
             getCurrentEnv().put(
                 CURRENT_SYMBOL,
-                new Environment(symbol, SymbolType.Variable));
+                new Symbol(symbol, SymbolType.Variable));
         }
     }
 
 	@Override 
     public void enterPostfixExpressionDot(SPOTParser.PostfixExpressionDotContext ctx) {
-        sb.append('[');
-        sb.append(getCurrentEnv().get(getCurrentEnv().get(CURRENT_SYMBOL).symbol).symbol);
-        sb.append(':');
-        sb.append(ctx.Identifier());
-        sb.append(']');
+        String id = ctx.Identifier().toString();
+        Symbol env = getCurrentEnv().get(id);
+
+//System.out.println("curenv:0"+id);
+//for (String name: getCurrentEnv().keySet()){
+//            String value = getCurrentEnv().get(name).toString();  
+//            System.out.println(name + "::" + value);  
+//} 
+        if (env == null) {
+            sb.append('[');
+            sb.append(getCurrentEnv().get(getCurrentEnv().get(CURRENT_SYMBOL).symbol).symbol);
+            sb.append(':');
+            sb.append(id);
+            sb.append(']');
+        } else if (env.type == SymbolType.Function) {
+            // TODO Multiple parameters?
+            sb.append(env.symbol);
+            sb.append('(');
+            sb.append("THIS");
+            sb.append(')');
+        }
     }
 
 	@Override 

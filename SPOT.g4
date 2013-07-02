@@ -519,7 +519,11 @@ externalDeclaration
     ;
 
 functionDefinition
-    :   declarationSpecifiers? declarator declarationList? compoundStatement
+    :   declarationSpecifiers? functionDeclarator declarationList? compoundStatement
+    ;
+
+functionDeclarator
+    : declarator
     ;
 
 declarationList
