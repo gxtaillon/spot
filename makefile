@@ -1,6 +1,7 @@
 antlr='/usr/local/lib/antlr-4.1-complete.jar'
 grun='org.antlr.v4.runtime.misc.TestRig'
-
+defaultTest='../Demo1.spo'
+spo=$(defaultTest)
 
 build: SPOT.g4 *.java
 	mkdir -p build classes
@@ -15,8 +16,8 @@ all: | clean build
  
 test-extract:
 	cd classes; \
-	cat ../Demo1.spo | java ExtractPawnTool
+	cat $(spo) | java ExtractPawnTool
 
 test-gui:
 	cd classes; \
-	cat ../Demo1.spo | java $(grun) SPOT compilationUnit -gui
+	cat $(spo) | java $(grun) SPOT compilationUnit -gui
