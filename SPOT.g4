@@ -378,9 +378,10 @@ parameterTypeList
     |   parameterList ',' '...'
     ;
 
+coma : ',' ;
 parameterList
     :   parameterDeclaration
-    |   parameterList ',' parameterDeclaration
+    |   parameterList coma parameterDeclaration
     ;
 
 parameterDeclaration

@@ -8,6 +8,7 @@ public class ExtractPawnListener extends SPOTBaseListener {
     final String CURRENT_SYMBOL = "__CURRENT_SYMBOL";
     final String CURRENT_UNRESOLVED_CLASS = "__CURRENT_UNRESOLVED_CLASS";
     final String CURRENT_CLASS = "__CURRENT_CLASS";
+    final String CURRENT_THIS = "__CURRENT_THIS";
     StringBuilder sb;
     SPOTParser parser;
     Stack<String> tags;
@@ -241,13 +242,22 @@ public class ExtractPawnListener extends SPOTBaseListener {
 	@Override 
     public void enterDirectDeclarator(SPOTParser.DirectDeclaratorContext ctx) {
         if (ctx.Identifier() != null) {
-            String id = asis(ctx);
+            TokenStream tokens = parser.getTokenStream();
+            String id = tokens.getText(ctx);
             if (isClass && isFunctionDeclarator) {
                 Symbol env = getCurrentEnv().get(CURRENT_CLASS);
                 String className = env.symbol;
+                String funcName = functionOfMember(className, id);
                 getCurrentEnv().put(
                     id,
-                    new Symbol(functionOfMember(className, id), SymbolType.Function));
+                    new Symbol(funcName, SymbolType.Function));
+                if (!isParameter) {
+                    sb.append(funcName);
+                } else {
+                    sb.append(id);
+                }
+            } else {
+                sb.append(id);
             }
         }
     }
@@ -274,7 +284,7 @@ public class ExtractPawnListener extends SPOTBaseListener {
         sb.append("{\n");
     }
 	@Override public void exitCompoundStatement(SPOTParser.CompoundStatementContext ctx) {
-        sb.append('}');
+        sb.append("}\n");
     }
     
 	@Override 
@@ -298,7 +308,16 @@ public class ExtractPawnListener extends SPOTBaseListener {
 
 	@Override 
     public void enterPrimaryExpression(SPOTParser.PrimaryExpressionContext ctx) {
-        String symbol = asis(ctx);
+        TokenStream tokens = parser.getTokenStream();
+        String symbol = tokens.getText(ctx);
+        if (isPostfixArgs) {
+            getCurrentEnv().put(
+                CURRENT_THIS,
+                new Symbol(symbol, SymbolType.Variable));
+        } else {
+            sb.append(symbol);
+            sb.append(' ');
+        }
         if (getCurrentEnv().containsKey(symbol)) {
             getCurrentEnv().put(
                 CURRENT_SYMBOL,
@@ -311,23 +330,16 @@ public class ExtractPawnListener extends SPOTBaseListener {
         String id = ctx.Identifier().toString();
         Symbol env = getCurrentEnv().get(id);
 
-//System.out.println("curenv:0"+id);
-//for (String name: getCurrentEnv().keySet()){
-//            String value = getCurrentEnv().get(name).toString();  
-//            System.out.println(name + "::" + value);  
-//} 
         if (env == null) {
             sb.append('[');
-            sb.append(getCurrentEnv().get(getCurrentEnv().get(CURRENT_SYMBOL).symbol).symbol);
+            sb.append(getCurrentEnv().get(
+                getCurrentEnv().get(CURRENT_SYMBOL).symbol
+                ).symbol);
             sb.append(':');
             sb.append(id);
             sb.append(']');
         } else if (env.type == SymbolType.Function) {
-            // TODO Multiple parameters?
             sb.append(env.symbol);
-            sb.append('(');
-            sb.append("THIS");
-            sb.append(')');
         }
     }
 
@@ -336,6 +348,32 @@ public class ExtractPawnListener extends SPOTBaseListener {
         if (ctx.postfixExpressionArgs() != null) {
             isPostfixArgs = true;
         }
+    }
+
+	@Override 
+    public void exitPostfixExpression(SPOTParser.PostfixExpressionContext ctx) {
+        if (ctx.postfixExpressionArgs() != null) {
+            isPostfixArgs = false;
+        }
+    }
+
+    @Override 
+    public void enterPostfixExpressionArgs(SPOTParser.PostfixExpressionArgsContext ctx) {
+        sb.append('(');
+        isPostfixArgs = false;
+        if (getCurrentEnv().containsKey(CURRENT_THIS)) {
+            Symbol thiss = getCurrentEnv().get(CURRENT_THIS);
+            sb.append(thiss.symbol);
+            if (ctx.argumentExpressionList() != null) {
+                sb.append(',');
+            }
+        }
+    }
+
+	@Override 
+    public void exitPostfixExpressionArgs(SPOTParser.PostfixExpressionArgsContext ctx) {
+        
+        sb.append(')');
     }
 
     // pseudo terminals
@@ -362,5 +400,6 @@ public class ExtractPawnListener extends SPOTBaseListener {
     @Override public void enterQuestion(SPOTParser.QuestionContext ctx) { asis(ctx); }
     @Override public void enterSemi(SPOTParser.SemiContext ctx) { asis(ctx); }
     @Override public void enterEq(SPOTParser.EqContext ctx) { asis(ctx); }
+    @Override public void enterComa(SPOTParser.ComaContext ctx) { asis(ctx); }
 	@Override public void enterAssignmentOperator(SPOTParser.AssignmentOperatorContext ctx) { asis(ctx); }
 }

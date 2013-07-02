@@ -1,9 +1,13 @@
 class Demo {
     myValue;
     Bool:truth1, truth2;
+    Demo:test;
 
     public getMyValue(Demo:this) { 
         return this.myValue; 
+    }
+    public setTruth1(Demo:this, _truth1) { 
+        return this.truth1 = _truth1; 
     }
 };
 
@@ -11,5 +15,6 @@ Bool:testObject() {
     new Demo:myDemo;
     myDemo.myValue = 123;
     new aValue = myDemo.myValue;
-    return aValue == myDemo.getMyValue();
+    new shouldBeTrue = aValue == myDemo.getMyValue();
+    myDemo.setTruth1(shouldBeTrue);
 }

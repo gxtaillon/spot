@@ -1,5 +1,6 @@
-antlr='/usr/local/lib/antlr-4.0-complete.jar'
+antlr='/usr/local/lib/antlr-4.1-complete.jar'
 grun='org.antlr.v4.runtime.misc.TestRig'
+
 
 build: SPOT.g4 *.java
 	mkdir -p build classes
@@ -11,7 +12,7 @@ clean:
 	rm -rf ./build ./classes
 
 all: | clean build
-
+ 
 test-extract:
 	cd classes; \
 	cat ../Demo1.spo | java ExtractPawnTool
