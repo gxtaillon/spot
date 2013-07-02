@@ -1,7 +1,5 @@
-spot
-====
-
 SourcePawn Object Translator
+====
 
 Quick info:
 SPOT will take a script looking like this and will translate it into a traditionnal SP script.
