@@ -8,7 +8,6 @@ SPOT will take a script looking like this and will translate it into a tradition
 class Demo {
     myValue;
     Bool:truth1, truth2;
-    Demo:test;
 
     public getMyValue(Demo:this) { 
         return this.myValue; 
@@ -42,11 +41,12 @@ Implemented features
 
 Planned features
 ----------------
-* Class up/downcasting
-* Interpretation of scopes
 * Class inheritance, multiple
+* Class up/downcasting
 * Class polymorphism
 * Interfaces
+* Interpretation of scopes
+* Classes as class variables
 
 Other features which could be fun to implement
 ----------------------------------------------
