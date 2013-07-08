@@ -35,10 +35,10 @@ It is possible that some terminals like ;(){}[] etc. will disappear during the t
 
 Implemented features
 --------------------
-* Class definition syntax :: class <ID> { <VAR|FUNC>* };
-* Class declaration syntax :: <new|decl> <CLASSID>:<ID>;
-* Class variable call syntax :: <ID>.<CLASSMEMBERID>
-* Class function call syntax :: <ID>.<CLASSMEMBERID>(<PARAM>*)
+* Class definition syntax :: class < ID > { < VAR | FUNC >* };
+* Class declaration syntax :: < new | decl > < CLASSID >:< ID >;
+* Class variable call syntax :: < ID >.< CLASSMEMBERID >
+* Class function call syntax :: < ID >.< CLASSMEMBERID >(< PARAM >*)
 
 Planned features
 ----------------
