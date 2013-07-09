@@ -1,3 +1,4 @@
+package lang;
 public class Tag extends LangConstruct {    
     public final static Tag _ = new Tag("_");
     public final static Tag String = new Tag("String");

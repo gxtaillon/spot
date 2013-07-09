@@ -1,3 +1,4 @@
+package lang;
 import java.util.*;
 
 public class Class extends Tag {

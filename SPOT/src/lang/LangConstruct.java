@@ -1,3 +1,4 @@
+package lang;
 public class LangConstruct {
     String identifier;
     

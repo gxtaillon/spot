@@ -1,3 +1,4 @@
+package lang;
 import java.util.*;
 
 public class Function extends LangConstruct {

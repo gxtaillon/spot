@@ -1,4 +1,5 @@
-class Variable extends LangConstruct {
+package lang;
+public class Variable extends LangConstruct {
     public Tag tag;
     
     public Variable(String _identifier) {
