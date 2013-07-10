@@ -1,0 +1,22 @@
+class A {
+    a;
+    f(A:this, x) { return this.a + x; }
+};
+
+class B {
+    b;
+    g(B:this, x) { return this.b * this.f(x); }
+};
+
+public OnPluginStart() {
+    new A:myA;
+    myA.a = 10;
+    new Bool:shouldBe13 = myA.f(3) == 13;
+    PrintToServer("myA.f(3) == 13 => %b", shouldBe13);
+    
+    new B:myB;
+    myB.a = 20;
+    myB.b = 5;
+    new Bool:shouldBe110 = myB.g(2) == 110;
+    PrintToServer("myB.g(2) == 110 => %b", shouldBe110);
+}

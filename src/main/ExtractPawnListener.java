@@ -179,7 +179,7 @@ public class ExtractPawnListener extends SPOTBaseListener {
 		// Push the current tag on top so we know what tags are the following
 		// member variables
 		tags.push((ctx.tagSpecifier() != null) ? tokens.getText(ctx
-				.tagSpecifier()) : Tag._.toPawn());
+				.tagSpecifier()) : "");
 	}
 
 	@Override
