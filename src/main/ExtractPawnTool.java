@@ -11,18 +11,30 @@ import parser.*;
 
 public class ExtractPawnTool {
 	public static void main(String[] args) throws Exception {
+		if (args.length < 1) {
+			System.out.println("Usage: <Source>");
+		}
+		
 		ANTLRInputStream input = new ANTLRInputStream(getFileContent(args[0]).toString());
+		
 		// create a lexer that feeds off of input CharStream
 		SPOTLexer lexer = new SPOTLexer(input);
+		
 		// create a buffer of tokens pulled from the lexer
 		CommonTokenStream tokens = new CommonTokenStream(lexer);
+		
 		// create a parser that feeds off the tokens buffer
 		SPOTParser parser = new SPOTParser(tokens);
-		ParseTree tree = parser.compilationUnit(); // begin parsing at init rule
-		ParseTreeWalker walker = new ParseTreeWalker(); // create standard
-														// walker
+		
+		// begin parsing at init rule
+		ParseTree tree = parser.compilationUnit(); 
+		
+		// create standard walker
+		ParseTreeWalker walker = new ParseTreeWalker(); 
 		ExtractPawnListener extractor = new ExtractPawnListener(parser);
-		walker.walk(extractor, tree); // initiate walk of tree with listener
+		
+		// initiate walk of tree with listener
+		walker.walk(extractor, tree); 
 		System.out.println(extractor.getOutput());
 	}
 	
