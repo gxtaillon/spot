@@ -293,12 +293,14 @@ public class ExtractPawnListener extends SPOTBaseListener {
 
 	@Override
 	public void enterCompoundStatement(SPOTParser.CompoundStatementContext ctx) {
+		createNewEnv();
 		sb.append("{\n");
 	}
 
 	@Override
 	public void exitCompoundStatement(SPOTParser.CompoundStatementContext ctx) {
 		sb.append("}\n");
+		restoreEnv();
 	}
 
 	@Override
