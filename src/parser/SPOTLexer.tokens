@@ -134,8 +134,8 @@ MinusAssign=96
 '_Thread_local'=60
 'public'=10
 'default'=23
-']'=64
 '<<='=97
+']'=64
 'enum'=27
 'new'=8
 '|='=101

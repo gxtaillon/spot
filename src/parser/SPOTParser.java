@@ -7824,12 +7824,6 @@ public class SPOTParser extends Parser {
 		}
 		return true;
 	}
-	private boolean logicalOrExpression_sempred(LogicalOrExpressionContext _localctx, int predIndex) {
-		switch (predIndex) {
-		case 25: return 1 >= _localctx._p;
-		}
-		return true;
-	}
 	private boolean inclusiveOrExpression_sempred(InclusiveOrExpressionContext _localctx, int predIndex) {
 		switch (predIndex) {
 		case 23: return 1 >= _localctx._p;
@@ -7845,6 +7839,12 @@ public class SPOTParser extends Parser {
 	private boolean genericAssocList_sempred(GenericAssocListContext _localctx, int predIndex) {
 		switch (predIndex) {
 		case 0: return 1 >= _localctx._p;
+		}
+		return true;
+	}
+	private boolean logicalOrExpression_sempred(LogicalOrExpressionContext _localctx, int predIndex) {
+		switch (predIndex) {
+		case 25: return 1 >= _localctx._p;
 		}
 		return true;
 	}
