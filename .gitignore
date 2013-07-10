@@ -1,14 +1,11 @@
 # SPOT
-classes/
-build/
-
 
 #################
 ## Eclipse
 #################
 
 *.pydevproject
-.project
+#.project
 .metadata
 bin/
 tmp/
@@ -17,15 +14,15 @@ tmp/
 *.swp
 *~.nib
 local.properties
-.classpath
-.settings/
+#.classpath
+#.settings/
 .loadpath
 
 # External tool builders
-.externalToolBuilders/
+#.externalToolBuilders/
 
 # Locally stored "Eclipse launch configurations"
-*.launch
+#*.launch
 
 # CDT-specific
 .cproject
