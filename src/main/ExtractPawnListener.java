@@ -3,15 +3,11 @@ package main;
 import parser.*;
 
 import org.antlr.v4.runtime.*;
-import org.antlr.v4.runtime.misc.*;
 
 import java.lang.StringBuilder;
 import java.util.*;
 
-import lang.Function;
-import lang.Symbol;
-import lang.SymbolType;
-import lang.Variable;
+import lang.*;
 
 public class ExtractPawnListener extends SPOTBaseListener {
 	final String CURRENT_SYMBOL = "__CURRENT_SYMBOL";
@@ -28,18 +24,7 @@ public class ExtractPawnListener extends SPOTBaseListener {
 	// When enter/exit'ing a function sb and csb will switch places to prevent
 	// writing functions inside the enum.
 	Stack<HashMap<String, Symbol>> environments;
-
-	protected String enumOfClass(String className) {
-		return "SPClass_" + className;
-	}
-
-	protected String functionOfMember(String className, String memberName) {
-		return className + "_" + memberName;
-	}
-
-	protected String variableOfMember(String className, String memberName) {
-		return className + ":" + memberName;
-	}
+	Stack<Scope> scopes;
 
 	protected String asis(ParserRuleContext ctx) {
 		TokenStream tokens = parser.getTokenStream();
@@ -140,7 +125,7 @@ public class ExtractPawnListener extends SPOTBaseListener {
 	public void enterTagSpecifier(SPOTParser.TagSpecifierContext ctx) {
 		getCurrentEnv().put(
 				CURRENT_UNRESOLVED_CLASS,
-				new Symbol(enumOfClass(ctx.Identifier().toString()),
+				new Symbol(TagClass.getPawnEnumId(ctx.Identifier().toString()),
 						SymbolType.Variable));
 	}
 
@@ -154,7 +139,7 @@ public class ExtractPawnListener extends SPOTBaseListener {
 	public void enterClassSpecifier(SPOTParser.ClassSpecifierContext ctx) {
 		isClass = true;
 		sb.append("enum ");
-		String className = enumOfClass(ctx.Identifier().toString());
+		String className = TagClass.getPawnEnumId(ctx.Identifier().toString());
 		sb.append(className);
 		sb.append(" {\n");
 
@@ -260,7 +245,7 @@ public class ExtractPawnListener extends SPOTBaseListener {
 			if (isClass && isFunctionDeclarator) {
 				Symbol env = getCurrentEnv().get(CURRENT_CLASS);
 				String className = env.symbol;
-				String funcName = functionOfMember(className, id);
+				String funcName = TagClass.getPawnFuncId(id, className);
 				getCurrentEnv().put(id,
 						new Symbol(funcName, SymbolType.Function));
 				if (!isParameter) {
