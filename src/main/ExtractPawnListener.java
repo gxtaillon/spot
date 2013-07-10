@@ -320,17 +320,25 @@ public class ExtractPawnListener extends SPOTBaseListener {
 		TokenStream tokens = parser.getTokenStream();
 		String id = tokens.getText(ctx);
 
-		// If we are inside a postfixExpressionArgs rule, it means we are
-		// playing with functions parameters
 		if (isPostfixArgs) {
-			getCurrentScope().tags.put(CURRENT_THIS, new Tag(id));
+			// If we are inside a postfixExpressionArgs rule, it means we are
+			// playing with functions parameters
+			if (getCurrentScope().tags.containsKey(id)) {
+				// CURRENT_THIS will be registered as the current "object" to 
+				//	be passed to a member function.
+				getCurrentScope().tags.put(CURRENT_THIS, new Tag(id));
+				getCurrentScope().tags.put(CURRENT_SYMBOL, new Tag(id));
+			} else {
+				// It is a ordinary function and we simply need to print 
+				//	its name back
+				sb.append(id);
+			}
 		} else {
+			if (getCurrentScope().tags.containsKey(id)) {
+				getCurrentScope().tags.put(CURRENT_SYMBOL, new Tag(id));
+			}
+			
 			sb.append(id);
-			// sb.append(' '); // required?
-		}
-
-		if (getCurrentScope().tags.containsKey(id)) {
-			getCurrentScope().tags.put(CURRENT_SYMBOL, new Tag(id));
 		}
 	}
 
@@ -386,6 +394,7 @@ public class ExtractPawnListener extends SPOTBaseListener {
 		if (getCurrentScope().tags.containsKey(CURRENT_THIS)) {
 			Tag thiss = getCurrentScope().tags.get(CURRENT_THIS);
 			sb.append(thiss.identifier);
+			 getCurrentScope().tags.remove(CURRENT_THIS);
 			
 			if (ctx.argumentExpressionList() != null) {
 				sb.append(',');

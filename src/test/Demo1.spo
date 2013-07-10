@@ -15,5 +15,6 @@ testObject() {
     myDemo.myValue = 123;
     new aValue = myDemo.myValue;
     new shouldBeTrue = aValue == myDemo.getMyValue();
-    myDemo.setTruth1(shouldBeTrue);
+    PrintToServer("%b", shouldBeTrue);
+    PrintToServer("%b", myDemo.setTruth1(shouldBeTrue));
 }
