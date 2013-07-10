@@ -35,6 +35,7 @@ public class ExtractPawnListener extends SPOTBaseListener {
 	protected String asis(ParserRuleContext ctx) {
 		TokenStream tokens = parser.getTokenStream();
 		String tmp = tokens.getText(ctx);
+		sb.append(' ');
 		sb.append(tmp);
 		sb.append(' ');
 		return tmp;
