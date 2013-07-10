@@ -23,9 +23,15 @@ public class ExtractPawnListener extends SPOTBaseListener {
 	StringBuilder csb; // the current class's functions sb.
 	// When enter/exit'ing a function sb and csb will switch places to prevent
 	// writing functions inside the enum.
-	Stack<HashMap<String, Symbol>> environments;
 	Stack<Scope> scopes;
 
+	/**
+	 * Appends the current rule "as is" to the current builder along with a
+	 * trailing space.
+	 * 
+	 * @param ctx
+	 * @return the current rule.
+	 */
 	protected String asis(ParserRuleContext ctx) {
 		TokenStream tokens = parser.getTokenStream();
 		String tmp = tokens.getText(ctx);
@@ -34,26 +40,19 @@ public class ExtractPawnListener extends SPOTBaseListener {
 		return tmp;
 	}
 
-	protected HashMap<String, Symbol> getCurrentEnv() {
-		return environments.peek();
+	protected Scope getCurrentScope() {
+		return scopes.peek();
 	}
 
-	protected HashMap<String, Symbol> createNewEnv() {
-		HashMap<String, Symbol> cur = getCurrentEnv();
-		HashMap<String, Symbol> newEnv = new HashMap<String, Symbol>();
-		newEnv.putAll(cur);
-		environments.push(newEnv);
+	protected Scope createNewScope() {
+		Scope cur = getCurrentScope();
+		scopes.push(cur.copyToNew());
 
-		// System.out.println("newenv post");
-		// for (String name: getCurrentEnv().keySet()){
-		// String value = getCurrentEnv().get(name).toString();
-		// System.out.println(name + "::" + value);
-		// }
-		return newEnv;
+		return getCurrentScope();
 	}
 
-	protected void restoreEnv() {
-		environments.pop();
+	protected void restoreScope() {
+		scopes.pop();
 	}
 
 	public ExtractPawnListener(SPOTParser parser) {
@@ -62,8 +61,8 @@ public class ExtractPawnListener extends SPOTBaseListener {
 		this.csb = new StringBuilder();
 		this.tags = new Stack<String>();
 		this.tags.push("");
-		this.environments = new Stack<HashMap<String, Symbol>>();
-		this.environments.push(new HashMap<String, Symbol>());
+		this.scopes = new Stack<Scope>();
+		this.scopes.push(new Scope());
 	}
 
 	public String getOutput() {
@@ -99,15 +98,22 @@ public class ExtractPawnListener extends SPOTBaseListener {
 	public void exitDeclarator(SPOTParser.DeclaratorContext ctx) {
 		TokenStream tokens = parser.getTokenStream();
 		if (isDeclaration && !isClass
-				&& getCurrentEnv().containsKey(CURRENT_UNRESOLVED_CLASS)) {
+				&& getCurrentScope().tags.containsKey(CURRENT_UNRESOLVED_CLASS)) {
+			// Will create the array using the ^^^^^^^^^^^^^^^^^^^^^^^^
+			// when declaring variable using a class.
+			// (Ex: new CLASS:Id; -> new Id[CLASS];)
 			sb.append('[');
-			String className = getCurrentEnv().get(CURRENT_UNRESOLVED_CLASS).symbol;
+			String className = getCurrentScope().tags
+					.get(CURRENT_UNRESOLVED_CLASS).identifier;
 			sb.append(className);
 			sb.append(']');
 
-			getCurrentEnv().put(tokens.getText(ctx.directDeclarator()),
-					new Symbol(className, SymbolType.Variable));
-			getCurrentEnv().remove(CURRENT_UNRESOLVED_CLASS);
+			// Maps the current symbol to its type
+			getCurrentScope().tags.put(tokens.getText(ctx.directDeclarator()),
+					new TagClass(className));
+
+			// Which means the class is no longer unresolved.
+			getCurrentScope().tags.remove(CURRENT_UNRESOLVED_CLASS);
 		}
 	}
 
@@ -123,10 +129,8 @@ public class ExtractPawnListener extends SPOTBaseListener {
 
 	@Override
 	public void enterTagSpecifier(SPOTParser.TagSpecifierContext ctx) {
-		getCurrentEnv().put(
-				CURRENT_UNRESOLVED_CLASS,
-				new Symbol(TagClass.getPawnEnumId(ctx.Identifier().toString()),
-						SymbolType.Variable));
+		getCurrentScope().tags.put(CURRENT_UNRESOLVED_CLASS,
+				new Tag(TagClass.getPawnEnumId(ctx.Identifier().toString())));
 	}
 
 	@Override
@@ -137,22 +141,33 @@ public class ExtractPawnListener extends SPOTBaseListener {
 
 	@Override
 	public void enterClassSpecifier(SPOTParser.ClassSpecifierContext ctx) {
+		// Set the context
 		isClass = true;
+
+		// Start writing the enum declaration
 		sb.append("enum ");
 		String className = TagClass.getPawnEnumId(ctx.Identifier().toString());
 		sb.append(className);
 		sb.append(" {\n");
 
-		getCurrentEnv().put(CURRENT_CLASS,
-				new Symbol(className, SymbolType.Variable));
+		// Add the current class (so that functions will be able to determine
+		// correctly their prefix)
+		getCurrentScope().tags.put(CURRENT_CLASS, new TagClass(className));
 	}
 
 	@Override
 	public void exitClassSpecifier(SPOTParser.ClassSpecifierContext ctx) {
+		// Let's close the enum
 		sb.append("};\n");
+
+		// Append our functions
 		sb.append(csb);
+
+		// Clean the class buffer
 		csb.delete(0, csb.length());
-		getCurrentEnv().remove(CURRENT_CLASS);
+
+		// Restore the context
+		getCurrentScope().tags.remove(CURRENT_CLASS);
 		isClass = false;
 		isExitingClass = true;
 	}
@@ -160,34 +175,41 @@ public class ExtractPawnListener extends SPOTBaseListener {
 	@Override
 	public void enterClassDeclaration(SPOTParser.ClassDeclarationContext ctx) {
 		TokenStream tokens = parser.getTokenStream();
+		// Push the current tag on top so we know what tags are the following
+		// member variables
 		tags.push((ctx.tagSpecifier() != null) ? tokens.getText(ctx
-				.tagSpecifier()) : "");
+				.tagSpecifier()) : Tag._.toPawn());
 	}
 
 	@Override
 	public void exitClassDeclaration(SPOTParser.ClassDeclarationContext ctx) {
-
+		// Restore the tags stack as we exit our declaration list
 		tags.pop();
+
+		// Helps to read the translation
 		sb.append('\n');
 	}
 
 	@Override
 	public void enterIdentifierList(SPOTParser.IdentifierListContext ctx) {
+		// Get the current tag and append it (to each identifer, this will
+		// prevent the loss of tags when using declaration lists)
 		sb.append(tags.peek());
 		sb.append(ctx.Identifier());
+
+		// There will be a trailing coma but the compiler is happy with it.
 		sb.append(',');
 	}
 
 	@Override
-	public void exitIdentifierList(SPOTParser.IdentifierListContext ctx) {
-		if (ctx.identifierList() != null) {
-		}
-	}
-
-	@Override
 	public void enterFunctionDefinition(SPOTParser.FunctionDefinitionContext ctx) {
+		// Set the context
 		isFunc = true;
-		// createNewEnv();
+
+		// If we are in a class, functions must not be appended on-the-fly
+		// since they would end up inside the enum (which is a bad thing...),
+		// so we switch the builders.
+		// Nested class declaration is not supported.
 		StringBuilder tmp;
 		if (isClass) {
 			tmp = sb;
@@ -198,13 +220,15 @@ public class ExtractPawnListener extends SPOTBaseListener {
 
 	@Override
 	public void exitFunctionDefinition(SPOTParser.FunctionDefinitionContext ctx) {
+		// Switch the builders (See enterFunctionDefinition)
 		StringBuilder tmp;
 		if (isClass) {
 			tmp = sb;
 			sb = csb;
 			csb = tmp;
 		}
-		// restoreEnv();
+
+		// Restore the context
 		isFunc = false;
 	}
 
@@ -220,21 +244,17 @@ public class ExtractPawnListener extends SPOTBaseListener {
 		TokenStream tokens = parser.getTokenStream();
 		if (ctx.declarationSpecifiers() != null) {
 			sb.append('[');
-			String className = getCurrentEnv().get(CURRENT_UNRESOLVED_CLASS).symbol;
+			String className = getCurrentScope().tags
+					.get(CURRENT_UNRESOLVED_CLASS).identifier;
 			sb.append(className);
 			sb.append(']');
 
-			getCurrentEnv().put(tokens.getText(ctx.declarator()),
-					new Symbol(className, SymbolType.Variable));
-			getCurrentEnv().remove(CURRENT_UNRESOLVED_CLASS);
+			getCurrentScope().tags.put(tokens.getText(ctx.declarator()),
+					new TagClass(className));
+			getCurrentScope().tags.remove(CURRENT_UNRESOLVED_CLASS);
 		}
-		isParameter = false;
-	}
 
-	@Override
-	public void enterTypeAccessQualifier(
-			SPOTParser.TypeAccessQualifierContext ctx) {
-		asis(ctx);
+		isParameter = false;
 	}
 
 	@Override
@@ -242,17 +262,20 @@ public class ExtractPawnListener extends SPOTBaseListener {
 		if (ctx.Identifier() != null) {
 			TokenStream tokens = parser.getTokenStream();
 			String id = tokens.getText(ctx);
+
 			if (isClass && isFunctionDeclarator) {
-				Symbol env = getCurrentEnv().get(CURRENT_CLASS);
-				String className = env.symbol;
+				Tag tag = getCurrentScope().tags.get(CURRENT_CLASS);
+				String className = tag.identifier;
 				String funcName = TagClass.getPawnFuncId(id, className);
-				getCurrentEnv().put(id,
-						new Symbol(funcName, SymbolType.Function));
+				getCurrentScope().functions.put(TagClass.getPawnFuncId(id,
+						className), new Function(funcName));
+
 				if (!isParameter) {
 					sb.append(funcName);
 				} else {
 					sb.append(id);
 				}
+
 			} else {
 				sb.append(id);
 			}
@@ -260,34 +283,18 @@ public class ExtractPawnListener extends SPOTBaseListener {
 	}
 
 	@Override
-	public void exitDirectDeclarator(SPOTParser.DirectDeclaratorContext ctx) {
-		if (ctx.parameterTypeList() == null && ctx.directDeclarator() != null) {
-			sb.append("()");
-		}
-	}
-
-	@Override
-	public void enterParameterTypeList(SPOTParser.ParameterTypeListContext ctx) {
-		sb.append('(');
-	}
-
-	@Override
-	public void exitParameterTypeList(SPOTParser.ParameterTypeListContext ctx) {
-		sb.append(')');
-	}
-
-	@Override
 	public void enterCompoundStatement(SPOTParser.CompoundStatementContext ctx) {
-		createNewEnv();
+		createNewScope();
 		sb.append("{\n");
 	}
 
 	@Override
 	public void exitCompoundStatement(SPOTParser.CompoundStatementContext ctx) {
 		sb.append("}\n");
-		restoreEnv();
+		restoreScope();
 	}
 
+	// TODO Use pseudo terminals instead
 	@Override
 	public void enterJumpStatement(SPOTParser.JumpStatementContext ctx) {
 		if (ctx.Goto() != null) {
@@ -310,17 +317,19 @@ public class ExtractPawnListener extends SPOTBaseListener {
 	@Override
 	public void enterPrimaryExpression(SPOTParser.PrimaryExpressionContext ctx) {
 		TokenStream tokens = parser.getTokenStream();
-		String symbol = tokens.getText(ctx);
+		String id = tokens.getText(ctx);
+
+		// If we are inside a postfixExpressionArgs rule, it means we are
+		// playing with functions parameters
 		if (isPostfixArgs) {
-			getCurrentEnv().put(CURRENT_THIS,
-					new Symbol(symbol, SymbolType.Variable));
+			getCurrentScope().tags.put(CURRENT_THIS, new Tag(id));
 		} else {
-			sb.append(symbol);
-			sb.append(' ');
+			sb.append(id);
+			// sb.append(' '); // required?
 		}
-		if (getCurrentEnv().containsKey(symbol)) {
-			getCurrentEnv().put(CURRENT_SYMBOL,
-					new Symbol(symbol, SymbolType.Variable));
+
+		if (getCurrentScope().tags.containsKey(id)) {
+			getCurrentScope().tags.put(CURRENT_SYMBOL, new Tag(id));
 		}
 	}
 
@@ -328,17 +337,28 @@ public class ExtractPawnListener extends SPOTBaseListener {
 	public void enterPostfixExpressionDot(
 			SPOTParser.PostfixExpressionDotContext ctx) {
 		String id = ctx.Identifier().toString();
-		Symbol env = getCurrentEnv().get(id);
+		Tag tag = getCurrentScope().tags.get(id);
 
-		if (env == null) {
+		// In the current scheme of things around here, when a symbol of a
+		// class is found an entry is added pairing it to its (real) Tag.
+		// Ex:
+		// __CURRENT_SYMBOL -> myDemo ***
+		// myDemo -> Class_Demo
+		// TODO *** Refactor Scope or its usage here since current Symbol
+		// is not a "Tag" but a variable.
+		Tag currentSymbol = getCurrentScope().tags.get(CURRENT_SYMBOL);
+		Tag currentClass = getCurrentScope().tags.get(currentSymbol.identifier);
+		Function func = getCurrentScope().functions.get(TagClass.getPawnFuncId(
+				id, currentClass.identifier));
+
+		if (func != null) {
+			sb.append(func.identifier);
+		} else if (tag == null) {
 			sb.append('[');
-			sb.append(getCurrentEnv().get(
-					getCurrentEnv().get(CURRENT_SYMBOL).symbol).symbol);
+			sb.append(currentClass.identifier);
 			sb.append(':');
 			sb.append(id);
 			sb.append(']');
-		} else if (env.type == SymbolType.Function) {
-			sb.append(env.symbol);
 		}
 	}
 
@@ -361,23 +381,24 @@ public class ExtractPawnListener extends SPOTBaseListener {
 			SPOTParser.PostfixExpressionArgsContext ctx) {
 		sb.append('(');
 		isPostfixArgs = false;
-		if (getCurrentEnv().containsKey(CURRENT_THIS)) {
-			Symbol thiss = getCurrentEnv().get(CURRENT_THIS);
-			sb.append(thiss.symbol);
+
+		if (getCurrentScope().tags.containsKey(CURRENT_THIS)) {
+			Tag thiss = getCurrentScope().tags.get(CURRENT_THIS);
+			sb.append(thiss.identifier);
+			
 			if (ctx.argumentExpressionList() != null) {
 				sb.append(',');
 			}
 		}
 	}
 
+	// pseudo terminals
 	@Override
-	public void exitPostfixExpressionArgs(
-			SPOTParser.PostfixExpressionArgsContext ctx) {
-
-		sb.append(')');
+	public void enterTypeAccessQualifier(
+			SPOTParser.TypeAccessQualifierContext ctx) {
+		asis(ctx);
 	}
 
-	// pseudo terminals
 	@Override
 	public void enterLpar(SPOTParser.LparContext ctx) {
 		asis(ctx);

@@ -64,7 +64,7 @@ postfixExpressionDot
     ;
 
 postfixExpressionArgs
-    : '(' argumentExpressionList? ')'
+    : '(' argumentExpressionList? rpar
     ;
 
 postfixExpression
@@ -83,7 +83,7 @@ postfixExpression
 
 argumentExpressionList
     :   assignmentExpression
-    |   argumentExpressionList ',' assignmentExpression
+    |   argumentExpressionList coma assignmentExpression
     ;
 
 unaryExpression
@@ -330,13 +330,13 @@ declarator
 
 directDeclarator
     :   Identifier
-    |   '(' declarator ')'
+    |   lpar declarator rpar
     |   directDeclarator '[' typeQualifierList? assignmentExpression? ']'
     //|   directDeclarator '[' 'static' typeQualifierList? assignmentExpression ']'
     //|   directDeclarator '[' typeQualifierList 'static' assignmentExpression ']'
     |   directDeclarator '[' typeQualifierList? '*' ']'
-    |   directDeclarator '(' parameterTypeList ')'
-    |   directDeclarator '(' identifierList? ')'
+    |   directDeclarator lpar parameterTypeList rpar
+    |   directDeclarator lpar identifierList? rpar
     ;
 
 gccDeclaratorExtension
