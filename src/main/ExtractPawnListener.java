@@ -3,6 +3,8 @@ package main;
 import parser.*;
 
 import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.misc.NotNull;
+import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.lang.StringBuilder;
 import java.util.*;
@@ -40,6 +42,18 @@ public class ExtractPawnListener extends SPOTBaseListener {
 		sb.append(' ');
 		return tmp;
 	}
+	
+	protected String asis(TerminalNode node) {
+		return asis(node, " ");
+	}
+	
+	protected String asis(TerminalNode node, String postfix) {
+		String tmp = node.getText();
+		sb.append(' ');
+		sb.append(tmp);
+		sb.append(postfix);
+		return tmp;
+	}
 
 	protected Scope getCurrentScope() {
 		return scopes.peek();
@@ -68,6 +82,13 @@ public class ExtractPawnListener extends SPOTBaseListener {
 
 	public String getOutput() {
 		return sb.toString();
+	}
+	
+
+	@Override public void visitTerminal(TerminalNode node) { 
+		if (node.getText().startsWith("#")) {
+			asis(node, "\n");
+		}
 	}
 
 	@Override

@@ -269,7 +269,8 @@ classDeclarationList
 
 classDeclaration
     :   tagSpecifier? identifierList ';'
-    |   functionDefinition
+    |   functionDefinition    
+    |	LineDirective
     ;
 
 specifierQualifierList
@@ -482,7 +483,8 @@ blockItemList
 
 blockItem
     :   declaration
-    |   statement
+    |   statement    
+    |	LineDirective
     ;
 
 expressionStatement
@@ -521,6 +523,7 @@ externalDeclaration
     :   functionDefinition
     |   declaration
     |   ';' // stray ;
+    |	LineDirective
     ;
 
 functionDefinition
@@ -875,12 +878,6 @@ SChar
 
 LineDirective
     :   '#' Whitespace? DecimalConstant? Whitespace? StringLiteral? ~[\r\n]*
-        -> skip
-    ;
-
-PragmaDirective
-    :   '#' Whitespace? 'pragma' Whitespace ~[\r\n]*
-        -> skip
     ;
 
 Whitespace

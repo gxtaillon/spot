@@ -594,17 +594,6 @@ public interface SPOTListener extends ParseTreeListener {
 	void exitEqualityExpression(@NotNull SPOTParser.EqualityExpressionContext ctx);
 
 	/**
-	 * Enter a parse tree produced by {@link SPOTParser#postfixExpressionDot}.
-	 * @param ctx the parse tree
-	 */
-	void enterPostfixExpressionDot(@NotNull SPOTParser.PostfixExpressionDotContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link SPOTParser#postfixExpressionDot}.
-	 * @param ctx the parse tree
-	 */
-	void exitPostfixExpressionDot(@NotNull SPOTParser.PostfixExpressionDotContext ctx);
-
-	/**
 	 * Enter a parse tree produced by {@link SPOTParser#castExpression}.
 	 * @param ctx the parse tree
 	 */
@@ -614,6 +603,17 @@ public interface SPOTListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitCastExpression(@NotNull SPOTParser.CastExpressionContext ctx);
+
+	/**
+	 * Enter a parse tree produced by {@link SPOTParser#postfixExpressionDot}.
+	 * @param ctx the parse tree
+	 */
+	void enterPostfixExpressionDot(@NotNull SPOTParser.PostfixExpressionDotContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link SPOTParser#postfixExpressionDot}.
+	 * @param ctx the parse tree
+	 */
+	void exitPostfixExpressionDot(@NotNull SPOTParser.PostfixExpressionDotContext ctx);
 
 	/**
 	 * Enter a parse tree produced by {@link SPOTParser#specifierQualifierList}.
@@ -803,17 +803,6 @@ public interface SPOTListener extends ParseTreeListener {
 	void exitClassDeclarationList(@NotNull SPOTParser.ClassDeclarationListContext ctx);
 
 	/**
-	 * Enter a parse tree produced by {@link SPOTParser#minus}.
-	 * @param ctx the parse tree
-	 */
-	void enterMinus(@NotNull SPOTParser.MinusContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link SPOTParser#minus}.
-	 * @param ctx the parse tree
-	 */
-	void exitMinus(@NotNull SPOTParser.MinusContext ctx);
-
-	/**
 	 * Enter a parse tree produced by {@link SPOTParser#declaration}.
 	 * @param ctx the parse tree
 	 */
@@ -823,6 +812,17 @@ public interface SPOTListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitDeclaration(@NotNull SPOTParser.DeclarationContext ctx);
+
+	/**
+	 * Enter a parse tree produced by {@link SPOTParser#minus}.
+	 * @param ctx the parse tree
+	 */
+	void enterMinus(@NotNull SPOTParser.MinusContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link SPOTParser#minus}.
+	 * @param ctx the parse tree
+	 */
+	void exitMinus(@NotNull SPOTParser.MinusContext ctx);
 
 	/**
 	 * Enter a parse tree produced by {@link SPOTParser#classSpecifier}.

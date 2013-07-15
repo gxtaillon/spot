@@ -708,19 +708,6 @@ public class SPOTBaseListener implements SPOTListener {
 	 * <p/>
 	 * The default implementation does nothing.
 	 */
-	@Override public void enterPostfixExpressionDot(@NotNull SPOTParser.PostfixExpressionDotContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 * <p/>
-	 * The default implementation does nothing.
-	 */
-	@Override public void exitPostfixExpressionDot(@NotNull SPOTParser.PostfixExpressionDotContext ctx) { }
-
-	/**
-	 * {@inheritDoc}
-	 * <p/>
-	 * The default implementation does nothing.
-	 */
 	@Override public void enterCastExpression(@NotNull SPOTParser.CastExpressionContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -728,6 +715,19 @@ public class SPOTBaseListener implements SPOTListener {
 	 * The default implementation does nothing.
 	 */
 	@Override public void exitCastExpression(@NotNull SPOTParser.CastExpressionContext ctx) { }
+
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void enterPostfixExpressionDot(@NotNull SPOTParser.PostfixExpressionDotContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void exitPostfixExpressionDot(@NotNull SPOTParser.PostfixExpressionDotContext ctx) { }
 
 	/**
 	 * {@inheritDoc}
@@ -955,19 +955,6 @@ public class SPOTBaseListener implements SPOTListener {
 	 * <p/>
 	 * The default implementation does nothing.
 	 */
-	@Override public void enterMinus(@NotNull SPOTParser.MinusContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 * <p/>
-	 * The default implementation does nothing.
-	 */
-	@Override public void exitMinus(@NotNull SPOTParser.MinusContext ctx) { }
-
-	/**
-	 * {@inheritDoc}
-	 * <p/>
-	 * The default implementation does nothing.
-	 */
 	@Override public void enterDeclaration(@NotNull SPOTParser.DeclarationContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -975,6 +962,19 @@ public class SPOTBaseListener implements SPOTListener {
 	 * The default implementation does nothing.
 	 */
 	@Override public void exitDeclaration(@NotNull SPOTParser.DeclarationContext ctx) { }
+
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void enterMinus(@NotNull SPOTParser.MinusContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void exitMinus(@NotNull SPOTParser.MinusContext ctx) { }
 
 	/**
 	 * {@inheritDoc}
