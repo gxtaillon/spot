@@ -268,7 +268,7 @@ classDeclarationList
     ;
 
 classDeclaration
-    :   tagSpecifier? identifierList ';'
+    :   tagSpecifier? identifierList semi
     |   functionDefinition    
     |	LineDirective
     ;

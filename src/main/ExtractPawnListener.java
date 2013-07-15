@@ -1,6 +1,8 @@
 package main;
 
 import parser.*;
+import util.state.IState;
+import util.state.IStateful;
 
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.misc.NotNull;
@@ -10,14 +12,15 @@ import java.lang.StringBuilder;
 import java.util.*;
 
 import lang.*;
+import lang.state.SSGlobal;
 
-public class ExtractPawnListener extends SPOTBaseListener {
+public class ExtractPawnListener extends SPOTBaseListener implements IStateful {
 	final String CURRENT_SYMBOL = "__CURRENT_SYMBOL";
 	final String CURRENT_UNRESOLVED_CLASS = "__CURRENT_UNRESOLVED_CLASS";
 	final String CURRENT_CLASS = "__CURRENT_CLASS";
 	final String CURRENT_THIS = "__CURRENT_THIS";
 	StringBuilder sb;
-	SPOTParser parser;
+	public SPOTParser parser;
 	Stack<String> tags;
 	boolean isClass, isExitingClass;
 	boolean isFunc, isParameter, isDeclaration, isPostfixArgs,
@@ -26,6 +29,13 @@ public class ExtractPawnListener extends SPOTBaseListener {
 	// When enter/exit'ing a function sb and csb will switch places to prevent
 	// writing functions inside the enum.
 	Stack<Scope> scopes;
+	
+	private IState currentState;
+	
+	@Override
+	public void setState(IState state) {
+		currentState = state;		
+	}
 
 	/**
 	 * Appends the current rule "as is" to the current builder along with a
@@ -78,17 +88,12 @@ public class ExtractPawnListener extends SPOTBaseListener {
 		this.tags.push("");
 		this.scopes = new Stack<Scope>();
 		this.scopes.push(new Scope());
+		
+		this.currentState = new SSGlobal(this);
 	}
 
 	public String getOutput() {
 		return sb.toString();
-	}
-	
-
-	@Override public void visitTerminal(TerminalNode node) { 
-		if (node.getText().startsWith("#")) {
-			asis(node, "\n");
-		}
 	}
 
 	@Override
