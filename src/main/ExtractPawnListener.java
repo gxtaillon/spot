@@ -5,7 +5,6 @@ import util.state.IState;
 import util.state.IStateful;
 
 import org.antlr.v4.runtime.*;
-import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.lang.StringBuilder;
