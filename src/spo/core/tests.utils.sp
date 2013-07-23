@@ -5,8 +5,8 @@
 
 #pragma semicolon 1
 
-stock printArray(src[], srcSize = sizeof src) {
+stock printArray(src[], String:f[] = "src[%d] = {%d}", srcSize = sizeof src) {
     for (new i = 0; i != srcSize; ++i) {
-        PrintToServer("src[%d] = {%d}", i, src[i]);
+        PrintToServer(f, i, src[i]);
     }
 }

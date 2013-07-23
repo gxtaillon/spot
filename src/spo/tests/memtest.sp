@@ -2,10 +2,16 @@
 #include "../core/tests.utils.sp"
 
 public OnPluginStart() {
-    new p1 = _SPO_Alloc(1);
-    _SPO_Heap[p1] = 3;
-    new p2 = _SPO_Alloc(15);
+    _SPO_New(p1, 1);
+    _SPO_Deref(p1, 0) = 3;
+    _SPO_Free(p1);
+    
     new String:s2[] = "My memory manager works";
-    _SPO_CopyTo(s2, _SPO_Heap, p2);
-    printArray(_SPO_Heap); // Output is gibberish because it's a packed string
+    _SPO_New(p2, sizeof s2);
+    _SPO_CopyTo(s2, p2);
+    decl String:s2b[sizeof s2];
+    _SPO_CopyFrom(p2, s2b);
+    PrintToServer("%s", s2);
+    PrintToServer("%s", s2b);
+    _SPO_Free(p2);
 }
