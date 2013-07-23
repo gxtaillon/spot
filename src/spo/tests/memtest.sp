@@ -2,6 +2,16 @@
 #include "../core/tests.utils.sp"
 
 public OnPluginStart() {
+    _SPO_Decl(p0,50);
+    _SPO_Alloc(p0);
+    for (new i = 0; i != 50; ++i) {
+        _SPO_Deref(p0, i) = i;
+    }
+    for (new j = 0; j != 50; ++j) {
+        PrintToServer("%d", _SPO_Deref(p0, j));
+    }
+    _SPO_Free(p0);    
+    
     _SPO_New(p1, 1);
     _SPO_Deref(p1, 0) = 3;
     _SPO_Free(p1);

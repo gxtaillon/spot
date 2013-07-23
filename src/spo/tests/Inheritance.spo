@@ -24,6 +24,7 @@ class AB : A, B {
             (B:this).f(x)
             );
     }
+};
 
 public OnPluginStart() {
     new A:myA = A();
