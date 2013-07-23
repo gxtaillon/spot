@@ -24,4 +24,12 @@ public OnPluginStart() {
     PrintToServer("%s", s2);
     PrintToServer("%s", s2b);
     _SPO_Free(p2);
+    
+    _SPO_NewC(p3, 17);
+    _SPO_DerefC(p3 + 09) = 1234;
+    _SPO_DerefC(p3 + 17) = 4321;
+    printArray(p3_ptr);
+    PrintToServer("%d", _SPO_DerefC(p3 + 09));
+    PrintToServer("%d", _SPO_DerefC(p3 + 17));
+    _SPO_FreeC(p3, 17);
 }
