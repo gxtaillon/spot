@@ -45,6 +45,7 @@ Implemented features
 * Class declaration syntax :: < new | decl > < CLASSID >:< ID >;
 * Class variable call syntax :: < ID >.< CLASSMEMBERID >
 * Class function call syntax :: < ID >.< CLASSMEMBERID >(< PARAM >*)
+* Non-native dependant dynamic memory allocation (Pointer-like features within the script)
 
 Planned features
 ----------------
