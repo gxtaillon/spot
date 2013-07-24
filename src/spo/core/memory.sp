@@ -96,10 +96,30 @@ static _SPO_FindNextFreeFramePos(startingFrame) {
     return pos;
 }
 
+/**
+ * %0       The pos of the frame to reserve
+ */
 #define _SPO_ReserveFrame(%0)       _SPO_BitSet(_SPO_Heap_Allocations[(%0) / cellbits], (%0) % cellbits)
+
+/**
+ * %0       The pos of the frame to free
+ */
 #define _SPO_FreeFrame(%0)          _SPO_BitUnSet(_SPO_Heap_Allocations[(%0) / cellbits], (%0) % cellbits)
+
+/**
+ * %0       The size, in cells, which as to be allocated.
+ * return   The size, in frame, required.
+ */
 #define _SPO_AllocationSize(%0)     ((%0) / _SPO_Conf_Heap_Page_Size) + _:(((%0) % _SPO_Conf_Heap_Page_Size) > 0)
 
+
+/**
+ * ptr      The ptr which must be allocated
+ * requireContiguous
+ *          If true, Alloc will return a contiguous block of cells, otherwise it must not be assumed that it will be.
+ * sizeP    The size of the pointer
+ * return   True if no problem were encountered, otherwise false.
+ */
 stock bool:_SPO_Alloc(ptr[], requireContigous = false, sizeP = sizeof ptr) {    // ptr is for page translator, it conviently resemble a pointer! :wink:
     if (
         // The user is sending crap
@@ -158,12 +178,20 @@ stock bool:_SPO_Alloc(ptr[], requireContigous = false, sizeP = sizeof ptr) {    
     return true;
 }
 
+/**
+ * ptr      The pointer to free
+ * sizeP    The size of the pointer 
+ */
 stock _SPO_Free(ptr[], sizeP = sizeof ptr) {
     for (new i = 0; i != sizeP; ++i) {
         _SPO_FreeFrame(ptr[i]);
     }
 }
 
+/**
+ * pos      The position of the first frame in the heap of a contiguous pointer
+ * size     The size in cells of the pointer's data
+ */
 stock _SPO_FreeC(pos, size) {
     new startPosF = pos / _SPO_Conf_Heap_Page_Size;
     new endPosF = startPosF + _SPO_AllocationSize(size);
@@ -172,11 +200,45 @@ stock _SPO_FreeC(pos, size) {
     }    
 }
 
+/**
+ * %0       The pointer to dereference
+ * %1       The offset to dereference
+ * return   The position in the heap of the corresponding pointer and offset
+ */
 #define _SPO_DerefPos(%0,%1)        ((%0)[(%1) / _SPO_Conf_Heap_Page_Size] * _SPO_Conf_Heap_Page_Size) + ((%1) % _SPO_Conf_Heap_Page_Size)
+
+/**
+ * %0       The pointer to dereference
+ * %1       The offset to dereference
+ * return   The value stored at the corresponding pointer and offset
+ */
 #define _SPO_Deref(%0,%1)           _SPO_Heap[_SPO_DerefPos(%0, %1)]            // Gives access to the allocated cell
+
+/**
+ * %0       The identifier of the pointer
+ * %1       The size, in cells, of the pointer's data
+ * effect   declares a pointer in the current scope
+ */
 #define _SPO_Decl(%0,%1)            decl %0[_SPO_AllocationSize(%1)]
+
+/**
+ * %0       The identifier of the pointer
+ * %1       The size, in cells, of the pointer's data
+ * effect   declares a pointer in the current scope and then allocates it
+ */
 #define _SPO_New(%0,%1)             _SPO_Decl(%0, %1); _SPO_Alloc((%0))
+
+/**
+ * %0       The identifier of the pointer
+ * %1       The size, in cells, of the pointer's data
+ * effect   declares a pointer (contiguous) in the current scope and a reference to its first position in the heap
+ */
 #define _SPO_NewC(%0,%1)            _SPO_Decl(%0_ptr, %1); _SPO_Alloc((%0_ptr), true); new %0 = _SPO_DerefPos(%0_ptr, 0)
+
+/**
+ * %0       The offset to dereference
+ * return   The value stored at the corresponding offset in the heap
+ */
 #define _SPO_DerefC(%0)             _SPO_Heap[(%0)]
 
 /*
@@ -189,6 +251,12 @@ stock _SPO_FreeC(pos, size) {
 #define _SPO_RefDeref(%0,%1)        
 */
 
+/**
+ * src      The array to be copied
+ * ptr      The pointer in which the array must be copied
+ * *offset  The offsets at which to start copying
+ * *Size    The sizes of the arrays
+ */
 stock _SPO_CopyTo(src[], ptr[], ptrOffset = 0, srcOffset = 0, srcSize = sizeof src, ptrSize = sizeof ptr) {
     // remaining cells will be ignored.
     for (new i = 0; i != srcSize && i != ptrSize; ++i) {
@@ -196,6 +264,12 @@ stock _SPO_CopyTo(src[], ptr[], ptrOffset = 0, srcOffset = 0, srcSize = sizeof s
     }
 }
 
+/**
+ * src      The array in which the array must be copied
+ * ptr      The pointer to be copied
+ * *offset  The offsets at which to start copying
+ * *Size    The sizes of the arrays
+ */
 stock _SPO_CopyFrom(ptr[], src[], srcOffset = 0, ptrOffset = 0, srcSize = sizeof src, ptrSize = sizeof ptr) {
     // remaining cells will be ignored.
     for (new i = 0; i != srcSize && i != ptrSize; ++i) {

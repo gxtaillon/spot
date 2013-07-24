@@ -1,5 +1,7 @@
 #include <profiler>
 
+#include "../core/memory.sp"
+
 #if 1
   #define get 100
 #else
@@ -5022,11 +5024,13 @@ public OnPluginStart() {
   new Float:avgBAdt = 0.0;
   new Float:avgBAdtP = 0.0;
   new Float:avgBTrie = 0.0;
+  new Float:avgBMem = 0.0;
   new Float:avgSPwnN = 0.0;
   new Float:avgSPwnD = 0.0;
   new Float:avgSAdt = 0.0;
   new Float:avgSAdtP = 0.0;
   new Float:avgSTrie = 0.0;
+  new Float:avgSMem = 0.0;
   
   for (new i = 0; i != size0; ++i) {
     avgBPwnN += bmBPwnN();
@@ -5034,11 +5038,13 @@ public OnPluginStart() {
     avgBAdt += bmBAdt();
     avgBAdtP += bmBAdtP();
     avgBTrie += bmBTrie();
+    avgBMem += bmBMem();
     avgSPwnN += bmSPwnN();
     avgSPwnD += bmSPwnD();
     avgSAdt += bmSAdt();
     avgSAdtP += bmSAdtP();  
     avgSTrie += bmSTrie();
+    avgSMem += bmSMem();
   }
   
 
@@ -5051,22 +5057,26 @@ public OnPluginStart() {
   avgBAdt /= size0;
   avgBAdtP /= size0;
   avgBTrie /= size0;
+  avgBMem /= size0;
   avgSPwnN /= size0;
   avgSPwnD /= size0;
   avgSAdt /= size0;
   avgSAdtP /= size0;
   avgSTrie /= size0;
+  avgSMem /= size0;
 
   PrintToServer("Avg\navgBPwnN: %f", avgBPwnN); 
   PrintToServer("avgBPwnD: %f", avgBPwnD); 
   PrintToServer("avgBAdt: %f", avgBAdt); 
   PrintToServer("avgBAdtP: %f", avgBAdtP); 
   PrintToServer("avgBTrie: %f", avgBTrie); 
+  PrintToServer("avgBMem: %f", avgBMem); 
   PrintToServer("avgSPwnN: %f", avgSPwnN); 
   PrintToServer("avgSPwnD: %f", avgSPwnD); 
   PrintToServer("avgSAdt: %f", avgSAdt); 
   PrintToServer("avgSAdtP: %f", avgSAdtP);   
   PrintToServer("avgSTrie: %f", avgSTrie);   
+  PrintToServer("avgSMem: %f", avgSMem); 
 }
   
 // adt can handle sizes greater than 5000 while arrays tend to fail.
@@ -5100,6 +5110,45 @@ Float:bmSTrie() {
       SetTrieValue(a1, keys[i], get);
     }
     CloseHandle(a1);
+  }
+
+  StopProfiling(p1);
+
+  new Float:time = GetProfilerTime(p1);
+  CloseHandle(p1);
+  return time;
+}
+
+Float:bmBMem() {
+  _SPO_New(a1, size1);
+  new Handle:p1 = CreateProfiler();
+
+  StartProfiling(p1);
+
+  for (new i = 0; i != size1; ++i) {
+    _SPO_Deref(a1, i) = get;
+  }
+
+  StopProfiling(p1);
+
+  _SPO_Free(a1);
+  
+  new Float:time = GetProfilerTime(p1);
+  CloseHandle(p1);
+  return time;
+}
+
+Float:bmSMem() {
+  new Handle:p1 = CreateProfiler();
+
+  StartProfiling(p1);
+
+  for (new i = 0; i != size1/size2; ++i) {
+    _SPO_New(a1, size2);
+    for (new j = 0; j != size2; ++j) {
+      _SPO_Deref(a1, j) = get;
+    }
+    _SPO_Free(a1);
   }
 
   StopProfiling(p1);
