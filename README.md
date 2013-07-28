@@ -3,7 +3,7 @@ SourcePawn Object Translator
 
 Quick info
 ----------
-SPOT statically adds object oriented features to the SourcePawn scripting language. It aims to be backward compatible with traditionnal SourcePawn scripts and does not rely on native calls. This means one can write an SPO (SourcePawn Object) script with nothing more than SPOT and a SourceMod installation.
+SPOT statically adds object oriented features to the SourcePawn scripting language. It aims to be backward compatible with traditionnal SourcePawn scripts and does not rely on native calls. This means one can write an SPO (SourcePawn Object) script with nothing more than SPOT and a SourceMod installation. No additionnal plugins required.
 
 It is in a very early state. Expect some bugs.
 
