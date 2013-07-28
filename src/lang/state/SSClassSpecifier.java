@@ -9,45 +9,45 @@ import lang.TagClass;
 
 public class SSClassSpecifier extends ScopeStateBase {
 	protected TagClass currentClass;
-	
-	public SSClassSpecifier(IStateful _source, Scope previousScope, ScopeStateBase _previousState, String classId) {
-		super(_source);
+
+	public SSClassSpecifier(IStateful _source, Scope previousScope,
+			ScopeStateBase _previousState, String classId) {
+		super(_source, _previousState);
 		previousScope.copyTo(currentScope);
 		
-		previousState = _previousState;
-		currentClass = new TagClass(TagClass.getPawnEnumId(classId));
-
-		currentBuilder.append("enum ");
-		currentBuilder.append(currentClass.identifier);
-		currentBuilder.append(" {\n");		
+		String up = getSourceConfig().getUniversalPrefix();
+		currentClass = new TagClass(up + TagClass.getPawnEnumId(classId));
+		
+		
+		pawnDefine(currentClass.identifier + up + "Id", Integer.toString(currentClass.getUId()));		
 	}
-
 
 	@Override
 	public void exitClassSpecifier(SPOTParser.ClassSpecifierContext ctx) {
-		// Let's close the enum
-		currentBuilder.append("};\n");
-
+		String up = getSourceConfig().getUniversalPrefix();
+		
+		// Define our size
+		pawnDefine(currentClass.identifier + up + "Size", Integer.toString(currentClass.variables.size()));	
+		
 		// Append our functions
-		//sb.append(csb);
+		// sb.append(csb);
 
 		// Clean the class buffer
-		//csb.delete(0, csb.length());
-		
-		// Restore
-		getSource().setState(previousState);
+		// csb.delete(0, csb.length());
+
+
+		ret();
 	}
-	
+
 	/* Substates */
 	@Override
 	public void enterClassDeclaration(SPOTParser.ClassDeclarationContext ctx) {
 		// If we are parsing variables
 		if (ctx.identifierList() != null) {
-			TokenStream tokens = getSourceListener().parser.getTokenStream();
-			String currentTag = (ctx.tagSpecifier() != null) 
-					? tokens.getText(ctx.tagSpecifier()) 
-					: "";
-			getSource().setState(new SSHandler_IdentifierList(getSource(), currentTag));		
+			//TokenStream tokens = getSourceListener().parser.getTokenStream();
+			//String currentTag = (ctx.tagSpecifier() != null) ? tokens.getText(ctx.tagSpecifier()) : "";
+			
+			getSource().setState(new SSClassSpecifier_SSHIdentifierList(getSource(), this, currentClass));
 		}
 		// Function definitions will be handled in functionDefinition()
 	}

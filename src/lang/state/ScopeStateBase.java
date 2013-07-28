@@ -8,6 +8,7 @@ import parser.*;
 import util.state.IState;
 import util.state.IStateful;
 import lang.*;
+import main.Config;
 import main.ExtractPawnListener;
 
 public abstract class ScopeStateBase implements IState {
@@ -16,11 +17,27 @@ public abstract class ScopeStateBase implements IState {
 	protected ScopeStateBase previousState;
 	private IStateful source;
 
-	public ScopeStateBase(IStateful _source) {
+	public ScopeStateBase(IStateful _source, ScopeStateBase _previousState) {
 		source = _source;
 		currentBuilder = new StringBuilder();
 		currentScope = new Scope();
-		previousState = null;
+		previousState = _previousState;
+	}
+	
+	/**
+	 * Should be called when the current state is exiting its last node to 
+	 * return control to its previous state.
+	 */
+	protected void ret/*urn*/() {
+		// Save the builder!
+		previousState.currentBuilder.append(currentBuilder);
+		
+		// Return control
+		getSource().setState(previousState);
+	}
+
+	public StringBuilder getCurrentBuilder() {
+		return currentBuilder;
 	}
 
 	public IStateful getSource() {
@@ -29,6 +46,10 @@ public abstract class ScopeStateBase implements IState {
 
 	public ExtractPawnListener getSourceListener() {
 		return (ExtractPawnListener) source;
+	}
+	
+	public Config getSourceConfig() {
+		return getSourceListener().config;
 	}
 
 	/**
@@ -59,10 +80,24 @@ public abstract class ScopeStateBase implements IState {
 		return tmp;
 	}
 	
+	protected void pawnDefine(String identifier, String value) {
+		currentBuilder.append("#define ");
+		currentBuilder.append(identifier);
+		currentBuilder.append("\t");
+		currentBuilder.append(value);
+	}
+	
+	// LISTENER METHODS
+	
 	public void visitTerminal(TerminalNode node) {
+		// Print line directive asis when they are encountered
 		if (node.getText().startsWith("#")) {
 			asis(node, "\n");
 		}		
+	}
+
+	public void exitCompilationUnit(SPOTParser.CompilationUnitContext ctx) {
+		
 	}
 
 	public void exitExpressionStatement(
@@ -161,106 +196,106 @@ public abstract class ScopeStateBase implements IState {
 
 	public void enterTypeAccessQualifier(
 			SPOTParser.TypeAccessQualifierContext ctx) {
-
+		asis(ctx);
 	}
 
 	public void enterLpar(SPOTParser.LparContext ctx) {
-
+		asis(ctx);
 	}
 
 	public void enterRpar(SPOTParser.RparContext ctx) {
-
+		asis(ctx);
 	}
 
 	public void enterStar(SPOTParser.StarContext ctx) {
-
+		asis(ctx);
 	}
 
 	public void enterDiv(SPOTParser.DivContext ctx) {
-
+		asis(ctx);
 	}
 
 	public void enterMod(SPOTParser.ModContext ctx) {
-
+		asis(ctx);
 	}
 
 	public void enterPlus(SPOTParser.PlusContext ctx) {
-
+		asis(ctx);
 	}
 
 	public void enterMinus(SPOTParser.MinusContext ctx) {
-
+		asis(ctx);
 	}
 
 	public void enterShiftr(SPOTParser.ShiftrContext ctx) {
-
+		asis(ctx);
 	}
 
 	public void enterShiftl(SPOTParser.ShiftlContext ctx) {
-
+		asis(ctx);
 	}
 
 	public void enterLess(SPOTParser.LessContext ctx) {
-
+		asis(ctx);
 	}
 
 	public void enterMore(SPOTParser.MoreContext ctx) {
-
+		asis(ctx);
 	}
 
 	public void enterLeeq(SPOTParser.LeeqContext ctx) {
-
+		asis(ctx);
 	}
 
 	public void enterMoeq(SPOTParser.MoeqContext ctx) {
-
+		asis(ctx);
 	}
 
 	public void enterEqeq(SPOTParser.EqeqContext ctx) {
-
+		asis(ctx);
 	}
 
 	public void enterNoteq(SPOTParser.NoteqContext ctx) {
-
+		asis(ctx);
 	}
 
 	public void enterAnd(SPOTParser.AndContext ctx) {
-
+		asis(ctx);
 	}
 
 	public void enterCaret(SPOTParser.CaretContext ctx) {
-
+		asis(ctx);
 	}
 
 	public void enterOr(SPOTParser.OrContext ctx) {
-
+		asis(ctx);
 	}
 
 	public void enterAndand(SPOTParser.AndandContext ctx) {
-
+		asis(ctx);
 	}
 
 	public void enterOror(SPOTParser.OrorContext ctx) {
-
+		asis(ctx);
 	}
 
 	public void enterQuestion(SPOTParser.QuestionContext ctx) {
-
+		asis(ctx);
 	}
 
 	public void enterSemi(SPOTParser.SemiContext ctx) {
-
+		asis(ctx);
 	}
 
 	public void enterEq(SPOTParser.EqContext ctx) {
-
+		asis(ctx);
 	}
 
 	public void enterComa(SPOTParser.ComaContext ctx) {
-
+		asis(ctx);
 	}
 
 	public void enterAssignmentOperator(SPOTParser.AssignmentOperatorContext ctx) {
-
+		asis(ctx);
 	}
 }

@@ -594,17 +594,6 @@ public interface SPOTListener extends ParseTreeListener {
 	void exitEqualityExpression(@NotNull SPOTParser.EqualityExpressionContext ctx);
 
 	/**
-	 * Enter a parse tree produced by {@link SPOTParser#castExpression}.
-	 * @param ctx the parse tree
-	 */
-	void enterCastExpression(@NotNull SPOTParser.CastExpressionContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link SPOTParser#castExpression}.
-	 * @param ctx the parse tree
-	 */
-	void exitCastExpression(@NotNull SPOTParser.CastExpressionContext ctx);
-
-	/**
 	 * Enter a parse tree produced by {@link SPOTParser#postfixExpressionDot}.
 	 * @param ctx the parse tree
 	 */
@@ -614,6 +603,17 @@ public interface SPOTListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitPostfixExpressionDot(@NotNull SPOTParser.PostfixExpressionDotContext ctx);
+
+	/**
+	 * Enter a parse tree produced by {@link SPOTParser#castExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterCastExpression(@NotNull SPOTParser.CastExpressionContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link SPOTParser#castExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitCastExpression(@NotNull SPOTParser.CastExpressionContext ctx);
 
 	/**
 	 * Enter a parse tree produced by {@link SPOTParser#specifierQualifierList}.
@@ -680,6 +680,17 @@ public interface SPOTListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitExpression(@NotNull SPOTParser.ExpressionContext ctx);
+
+	/**
+	 * Enter a parse tree produced by {@link SPOTParser#classInheritanceSpecifier}.
+	 * @param ctx the parse tree
+	 */
+	void enterClassInheritanceSpecifier(@NotNull SPOTParser.ClassInheritanceSpecifierContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link SPOTParser#classInheritanceSpecifier}.
+	 * @param ctx the parse tree
+	 */
+	void exitClassInheritanceSpecifier(@NotNull SPOTParser.ClassInheritanceSpecifierContext ctx);
 
 	/**
 	 * Enter a parse tree produced by {@link SPOTParser#unaryExpression}.
@@ -803,17 +814,6 @@ public interface SPOTListener extends ParseTreeListener {
 	void exitClassDeclarationList(@NotNull SPOTParser.ClassDeclarationListContext ctx);
 
 	/**
-	 * Enter a parse tree produced by {@link SPOTParser#declaration}.
-	 * @param ctx the parse tree
-	 */
-	void enterDeclaration(@NotNull SPOTParser.DeclarationContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link SPOTParser#declaration}.
-	 * @param ctx the parse tree
-	 */
-	void exitDeclaration(@NotNull SPOTParser.DeclarationContext ctx);
-
-	/**
 	 * Enter a parse tree produced by {@link SPOTParser#minus}.
 	 * @param ctx the parse tree
 	 */
@@ -823,6 +823,17 @@ public interface SPOTListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitMinus(@NotNull SPOTParser.MinusContext ctx);
+
+	/**
+	 * Enter a parse tree produced by {@link SPOTParser#declaration}.
+	 * @param ctx the parse tree
+	 */
+	void enterDeclaration(@NotNull SPOTParser.DeclarationContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link SPOTParser#declaration}.
+	 * @param ctx the parse tree
+	 */
+	void exitDeclaration(@NotNull SPOTParser.DeclarationContext ctx);
 
 	/**
 	 * Enter a parse tree produced by {@link SPOTParser#classSpecifier}.

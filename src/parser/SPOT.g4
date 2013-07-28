@@ -258,8 +258,11 @@ typeSpecifier
     ;
 
 classSpecifier
-    :   'class' Identifier '{' classDeclarationList? '}'
-    |   'class' Identifier
+    :   'class' Identifier classInheritanceSpecifier? '{' classDeclarationList? '}'
+    ;
+    
+classInheritanceSpecifier
+    : ':' identifierList
     ;
 
 classDeclarationList
@@ -268,7 +271,7 @@ classDeclarationList
     ;
 
 classDeclaration
-    :   tagSpecifier? identifierList semi
+    :   tagSpecifier? identifierList ';'
     |   functionDefinition    
     |	LineDirective
     ;

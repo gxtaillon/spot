@@ -5,6 +5,7 @@ import util.state.IState;
 import util.state.IStateful;
 
 import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.lang.StringBuilder;
@@ -12,28 +13,54 @@ import java.util.*;
 
 import lang.*;
 import lang.state.SSGlobal;
+import lang.state.ScopeStateBase;
 
 public class ExtractPawnListener extends SPOTBaseListener implements IStateful {
+	@Deprecated
 	final String CURRENT_SYMBOL = "__CURRENT_SYMBOL";
+	@Deprecated
 	final String CURRENT_UNRESOLVED_CLASS = "__CURRENT_UNRESOLVED_CLASS";
+	@Deprecated
 	final String CURRENT_CLASS = "__CURRENT_CLASS";
+	@Deprecated
 	final String CURRENT_THIS = "__CURRENT_THIS";
+	@Deprecated
 	StringBuilder sb;
 	public SPOTParser parser;
+	@Deprecated
 	Stack<String> tags;
+	@Deprecated
 	boolean isClass, isExitingClass;
+	@Deprecated
 	boolean isFunc, isParameter, isDeclaration, isPostfixArgs,
 			isFunctionDeclarator;
+	@Deprecated
 	StringBuilder csb; // the current class's functions sb.
 	// When enter/exit'ing a function sb and csb will switch places to prevent
 	// writing functions inside the enum.
+	@Deprecated
 	Stack<Scope> scopes;
 	
-	private IState currentState;
+	public Config config;
+	
+	private ScopeStateBase currentState;
 	
 	@Override
 	public void setState(IState state) {
-		currentState = state;		
+		currentState = (ScopeStateBase) state;		
+	}
+
+	public ExtractPawnListener(SPOTParser parser) {
+		this.config = new Config();		
+		this.currentState = new SSGlobal(this);
+		
+		this.parser = parser;
+		this.sb = new StringBuilder();
+		this.csb = new StringBuilder();
+		this.tags = new Stack<String>();
+		this.tags.push("");
+		this.scopes = new Stack<Scope>();
+		this.scopes.push(new Scope());
 	}
 
 	/**
@@ -43,6 +70,7 @@ public class ExtractPawnListener extends SPOTBaseListener implements IStateful {
 	 * @param ctx
 	 * @return the current rule.
 	 */
+	@Deprecated
 	protected String asis(ParserRuleContext ctx) {
 		TokenStream tokens = parser.getTokenStream();
 		String tmp = tokens.getText(ctx);
@@ -51,7 +79,8 @@ public class ExtractPawnListener extends SPOTBaseListener implements IStateful {
 		sb.append(' ');
 		return tmp;
 	}
-	
+
+	@Deprecated
 	protected String asis(TerminalNode node) {
 		return asis(node, " ");
 	}
@@ -64,10 +93,12 @@ public class ExtractPawnListener extends SPOTBaseListener implements IStateful {
 		return tmp;
 	}
 
+	@Deprecated
 	protected Scope getCurrentScope() {
 		return scopes.peek();
 	}
 
+	@Deprecated
 	protected Scope createNewScope() {
 		Scope cur = getCurrentScope();
 		scopes.push(cur.copyToNew());
@@ -75,26 +106,27 @@ public class ExtractPawnListener extends SPOTBaseListener implements IStateful {
 		return getCurrentScope();
 	}
 
+	@Deprecated
 	protected void restoreScope() {
 		scopes.pop();
 	}
 
-	public ExtractPawnListener(SPOTParser parser) {
-		this.parser = parser;
-		this.sb = new StringBuilder();
-		this.csb = new StringBuilder();
-		this.tags = new Stack<String>();
-		this.tags.push("");
-		this.scopes = new Stack<Scope>();
-		this.scopes.push(new Scope());
-		
-		this.currentState = new SSGlobal(this);
-	}
-
+	@Deprecated
 	public String getOutput() {
 		return sb.toString();
 	}
+	
+	public String getTranslation() {
+		return currentState.getCurrentBuilder().toString();
+	}
+	
+	// GRAMMAR RULES 	
 
+	@Override 
+	public void exitCompilationUnit(SPOTParser.CompilationUnitContext ctx) {
+		currentState.exitCompilationUnit(ctx);
+	}
+	
 	@Override
 	public void exitExpressionStatement(
 			SPOTParser.ExpressionStatementContext ctx) {

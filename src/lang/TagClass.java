@@ -4,7 +4,10 @@ import java.util.*;
 
 public class TagClass extends Tag {
 	public static final String PAWN_ENUM_PREFIX = "Class_";
-	public static final String PAWN_ENUM_POSTFIX = "";
+	public static final String PAWN_ENUM_POSTFIX = "_";
+	
+	private static int UIdCounter = 0;
+	private int UId;
 	
 	public Map<String, TagClass> parents;
 	public Map<String, Variable> variables;
@@ -37,6 +40,15 @@ public class TagClass extends Tag {
 		parents = _parents;
 		variables = _variables;
 		functions = _functions;
+		
+		UId = UIdCounter++;		
 	}
 
+	public int getUId() {
+		return UId;
+	}
+	
+	public int getUIdCounter() {
+		return UIdCounter;
+	}
 }
