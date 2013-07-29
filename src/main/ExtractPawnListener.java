@@ -41,7 +41,7 @@ public class ExtractPawnListener extends SPOTBaseListener implements IStateful {
 	@Deprecated
 	Stack<Scope> scopes;
 	
-	public Config config;
+	public ExtractorConfig config;
 	
 	private ScopeStateBase currentState;
 	
@@ -51,8 +51,8 @@ public class ExtractPawnListener extends SPOTBaseListener implements IStateful {
 	}
 
 	public ExtractPawnListener(SPOTParser parser) {
-		this.config = new Config();		
-		this.currentState = new SSGlobal(this);
+		this.config = new ExtractorConfig();		
+		//this.currentState = new SSGlobal(this);
 		
 		this.parser = parser;
 		this.sb = new StringBuilder();
@@ -120,12 +120,7 @@ public class ExtractPawnListener extends SPOTBaseListener implements IStateful {
 		return currentState.getCurrentBuilder().toString();
 	}
 	
-	// GRAMMAR RULES 	
-
-	@Override 
-	public void exitCompilationUnit(SPOTParser.CompilationUnitContext ctx) {
-		currentState.exitCompilationUnit(ctx);
-	}
+	// GRAMMAR RULES 
 	
 	@Override
 	public void exitExpressionStatement(

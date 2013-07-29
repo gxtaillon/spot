@@ -2,6 +2,7 @@ package lang.state;
 
 import lang.TagClass;
 import lang.Variable;
+import main.IStatefulExtractor;
 import parser.SPOTParser;
 import parser.SPOTParser.SemiContext;
 import util.state.IStateful;
@@ -9,7 +10,7 @@ import util.state.IStateful;
 public class SSClassSpecifier_SSHIdentifierList extends ScopeStateBase {
 	protected TagClass currentClass;
 	
-	public SSClassSpecifier_SSHIdentifierList(IStateful _source, ScopeStateBase _previousState, TagClass _currentClass) {
+	public SSClassSpecifier_SSHIdentifierList(IStatefulExtractor _source, ScopeStateBase _previousState, TagClass _currentClass) {
 		super(_source, _previousState);
 		currentClass = _currentClass;
 	}

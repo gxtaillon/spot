@@ -186,9 +186,9 @@ logicalOrExpression
     ;
 
 question : '?' ;
-semi : ':' ;
+colon : ':' ;
 conditionalExpression
-    :   logicalOrExpression (question expression semi conditionalExpression)?
+    :   logicalOrExpression (question expression colon conditionalExpression)?
     ;
 
 assignmentExpression
@@ -270,9 +270,20 @@ classDeclarationList
     |   classDeclarationList classDeclaration
     ;
 
+/* Since pawn already use the public keyword, the simpliest workaround is to prefix it with something. */
+spo_public : '__public' ;
+spo_private : '__private' ;
+spo_protected : '__protected' ;
+classVisibility 
+    : spo_public 
+    | spo_private
+    | spo_protected
+    ;
+    
+semi : ';' ;
 classDeclaration
-    :   tagSpecifier? identifierList ';'
-    |   functionDefinition    
+    :   classVisibility? tagSpecifier? identifierList semi
+    |   classVisibility? functionDefinition
     |	LineDirective
     ;
 

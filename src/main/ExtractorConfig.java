@@ -1,6 +1,6 @@
 package main;
 
-public class Config {
+public class ExtractorConfig {
 	private String UniversalPrefix = "_SPO_";
 	private String PathCore = "../core/";
 	

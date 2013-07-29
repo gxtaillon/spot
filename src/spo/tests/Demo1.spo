@@ -1,10 +1,12 @@
 class Demo {
     myValue;
     Bool:truth1, truth2;
-    public getMyValue(Demo:this) { 
+    
+    __public public getMyValue(Demo:this) { 
         return this.myValue;
     }
-    public setTruth1(Demo:this, _truth1) { 
+    
+    __public public setTruth1(Demo:this, _truth1) { 
         return this.truth1 = _truth1;
     }
 };

@@ -4,10 +4,14 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
+import lang.state.SSGlobal;
+
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
 
 import parser.*;
+import util.state.IState;
+import util.state.IStateful;
 
 public class ExtractPawnTool {
 	public static void main(String[] args) throws Exception {
@@ -31,11 +35,12 @@ public class ExtractPawnTool {
 		
 		// create standard walker
 		ParseTreeWalker walker = new ParseTreeWalker(); 
-		ExtractPawnListener extractor = new ExtractPawnListener(parser);
+		
+		StatefulPawnExtractor extractor = new StatefulPawnExtractor(parser, new ExtractorConfig());
 		
 		// initiate walk of tree with listener
 		walker.walk(extractor, tree); 
-		System.out.println(extractor.getOutput());
+		System.out.println(extractor.getTranslation());
 	}
 	
 	private static StringBuffer getFileContent(String path) throws IOException {

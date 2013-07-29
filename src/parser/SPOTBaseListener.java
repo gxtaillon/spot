@@ -71,6 +71,19 @@ public class SPOTBaseListener implements SPOTListener {
 	 * <p/>
 	 * The default implementation does nothing.
 	 */
+	@Override public void enterClassVisibility(@NotNull SPOTParser.ClassVisibilityContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void exitClassVisibility(@NotNull SPOTParser.ClassVisibilityContext ctx) { }
+
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
 	@Override public void enterNestedParenthesesBlock(@NotNull SPOTParser.NestedParenthesesBlockContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -292,6 +305,19 @@ public class SPOTBaseListener implements SPOTListener {
 	 * <p/>
 	 * The default implementation does nothing.
 	 */
+	@Override public void enterSpo_private(@NotNull SPOTParser.Spo_privateContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void exitSpo_private(@NotNull SPOTParser.Spo_privateContext ctx) { }
+
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
 	@Override public void enterExclusiveOrExpression(@NotNull SPOTParser.ExclusiveOrExpressionContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -357,6 +383,19 @@ public class SPOTBaseListener implements SPOTListener {
 	 * <p/>
 	 * The default implementation does nothing.
 	 */
+	@Override public void enterInitializerList(@NotNull SPOTParser.InitializerListContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void exitInitializerList(@NotNull SPOTParser.InitializerListContext ctx) { }
+
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
 	@Override public void enterDeclarationSpecifiers(@NotNull SPOTParser.DeclarationSpecifiersContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -377,19 +416,6 @@ public class SPOTBaseListener implements SPOTListener {
 	 * The default implementation does nothing.
 	 */
 	@Override public void exitPointer(@NotNull SPOTParser.PointerContext ctx) { }
-
-	/**
-	 * {@inheritDoc}
-	 * <p/>
-	 * The default implementation does nothing.
-	 */
-	@Override public void enterInitializerList(@NotNull SPOTParser.InitializerListContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 * <p/>
-	 * The default implementation does nothing.
-	 */
-	@Override public void exitInitializerList(@NotNull SPOTParser.InitializerListContext ctx) { }
 
 	/**
 	 * {@inheritDoc}
@@ -591,19 +617,6 @@ public class SPOTBaseListener implements SPOTListener {
 	 * <p/>
 	 * The default implementation does nothing.
 	 */
-	@Override public void enterSemi(@NotNull SPOTParser.SemiContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 * <p/>
-	 * The default implementation does nothing.
-	 */
-	@Override public void exitSemi(@NotNull SPOTParser.SemiContext ctx) { }
-
-	/**
-	 * {@inheritDoc}
-	 * <p/>
-	 * The default implementation does nothing.
-	 */
 	@Override public void enterLogicalAndExpression(@NotNull SPOTParser.LogicalAndExpressionContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -611,6 +624,19 @@ public class SPOTBaseListener implements SPOTListener {
 	 * The default implementation does nothing.
 	 */
 	@Override public void exitLogicalAndExpression(@NotNull SPOTParser.LogicalAndExpressionContext ctx) { }
+
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void enterSemi(@NotNull SPOTParser.SemiContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void exitSemi(@NotNull SPOTParser.SemiContext ctx) { }
 
 	/**
 	 * {@inheritDoc}
@@ -942,6 +968,19 @@ public class SPOTBaseListener implements SPOTListener {
 	 * <p/>
 	 * The default implementation does nothing.
 	 */
+	@Override public void enterSpo_protected(@NotNull SPOTParser.Spo_protectedContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void exitSpo_protected(@NotNull SPOTParser.Spo_protectedContext ctx) { }
+
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
 	@Override public void enterTypedefName(@NotNull SPOTParser.TypedefNameContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -994,19 +1033,6 @@ public class SPOTBaseListener implements SPOTListener {
 	 * <p/>
 	 * The default implementation does nothing.
 	 */
-	@Override public void enterClassSpecifier(@NotNull SPOTParser.ClassSpecifierContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 * <p/>
-	 * The default implementation does nothing.
-	 */
-	@Override public void exitClassSpecifier(@NotNull SPOTParser.ClassSpecifierContext ctx) { }
-
-	/**
-	 * {@inheritDoc}
-	 * <p/>
-	 * The default implementation does nothing.
-	 */
 	@Override public void enterDesignatorList(@NotNull SPOTParser.DesignatorListContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -1014,6 +1040,19 @@ public class SPOTBaseListener implements SPOTListener {
 	 * The default implementation does nothing.
 	 */
 	@Override public void exitDesignatorList(@NotNull SPOTParser.DesignatorListContext ctx) { }
+
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void enterClassSpecifier(@NotNull SPOTParser.ClassSpecifierContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void exitClassSpecifier(@NotNull SPOTParser.ClassSpecifierContext ctx) { }
 
 	/**
 	 * {@inheritDoc}
@@ -1189,6 +1228,19 @@ public class SPOTBaseListener implements SPOTListener {
 	 * <p/>
 	 * The default implementation does nothing.
 	 */
+	@Override public void enterSpo_public(@NotNull SPOTParser.Spo_publicContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void exitSpo_public(@NotNull SPOTParser.Spo_publicContext ctx) { }
+
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
 	@Override public void enterDeclarationSpecifiers2(@NotNull SPOTParser.DeclarationSpecifiers2Context ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -1235,6 +1287,19 @@ public class SPOTBaseListener implements SPOTListener {
 	 * The default implementation does nothing.
 	 */
 	@Override public void exitDiv(@NotNull SPOTParser.DivContext ctx) { }
+
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void enterColon(@NotNull SPOTParser.ColonContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void exitColon(@NotNull SPOTParser.ColonContext ctx) { }
 
 	/**
 	 * {@inheritDoc}

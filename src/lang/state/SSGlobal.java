@@ -1,5 +1,6 @@
 package lang.state;
 
+import main.IStatefulExtractor;
 import parser.SPOTParser;
 import parser.SPOTParser.ClassSpecifierContext;
 import util.state.IStateful;
@@ -7,7 +8,7 @@ import util.state.IStateful;
 public class SSGlobal extends ScopeStateBase {
 	StringBuilder headerBuilder;
 	
-	public SSGlobal(IStateful _source) {
+	public SSGlobal(IStatefulExtractor _source) {
 		super(_source, null);
 		
 		headerBuilder = new StringBuilder();
@@ -28,6 +29,6 @@ public class SSGlobal extends ScopeStateBase {
 	@Override
 	public void enterClassSpecifier(ClassSpecifierContext ctx) {
 		String classId = ctx.Identifier().toString();
-		getSource().setState(new SSClassSpecifier(getSource(), currentScope, this, classId));
+		getSourceExtractor().setState(new SSClassSpecifier(getSourceExtractor(), currentScope, this, classId));
 	}	
 }

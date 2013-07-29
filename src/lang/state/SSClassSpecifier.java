@@ -3,14 +3,14 @@ package lang.state;
 import org.antlr.v4.runtime.TokenStream;
 
 import parser.SPOTParser;
-import util.state.IStateful;
 import lang.Scope;
 import lang.TagClass;
+import main.IStatefulExtractor;
 
 public class SSClassSpecifier extends ScopeStateBase {
 	protected TagClass currentClass;
 
-	public SSClassSpecifier(IStateful _source, Scope previousScope,
+	public SSClassSpecifier(IStatefulExtractor _source, Scope previousScope,
 			ScopeStateBase _previousState, String classId) {
 		super(_source, _previousState);
 		previousScope.copyTo(currentScope);
@@ -26,15 +26,8 @@ public class SSClassSpecifier extends ScopeStateBase {
 	public void exitClassSpecifier(SPOTParser.ClassSpecifierContext ctx) {
 		String up = getSourceConfig().getUniversalPrefix();
 		
-		// Define our size
+		// Define the size
 		pawnDefine(currentClass.identifier + up + "Size", Integer.toString(currentClass.variables.size()));	
-		
-		// Append our functions
-		// sb.append(csb);
-
-		// Clean the class buffer
-		// csb.delete(0, csb.length());
-
 
 		ret();
 	}
@@ -47,7 +40,7 @@ public class SSClassSpecifier extends ScopeStateBase {
 			//TokenStream tokens = getSourceListener().parser.getTokenStream();
 			//String currentTag = (ctx.tagSpecifier() != null) ? tokens.getText(ctx.tagSpecifier()) : "";
 			
-			getSource().setState(new SSClassSpecifier_SSHIdentifierList(getSource(), this, currentClass));
+			getSourceExtractor().setState(new SSClassSpecifier_SSHIdentifierList(getSourceExtractor(), this, currentClass));
 		}
 		// Function definitions will be handled in functionDefinition()
 	}
