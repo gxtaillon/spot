@@ -1,4 +1,4 @@
-package main;
+package spot.main;
 
 public class ExtractorConfig {
 	private String UniversalPrefix = "_SPO_";

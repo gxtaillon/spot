@@ -1,3 +1,3 @@
-package lang;
+package spot.lang;
 
 public enum SymbolType { Variable, Function }

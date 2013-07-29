@@ -1,4 +1,4 @@
-package lang;
+package spot.lang;
 
 import java.util.HashMap;
 import java.util.Map;

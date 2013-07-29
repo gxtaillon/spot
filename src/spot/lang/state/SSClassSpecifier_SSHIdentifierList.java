@@ -1,12 +1,12 @@
-package lang.state;
+package spot.lang.state;
 
-import lang.EVisibility;
-import lang.TagClass;
-import lang.Variable;
-import main.IStatefulExtractor;
-import parser.SPOTParser;
-import parser.SPOTParser.SemiContext;
-import util.state.IStateful;
+import spot.lang.EVisibility;
+import spot.lang.TagClass;
+import spot.lang.Variable;
+import spot.main.IStatefulExtractor;
+import spot.parser.SPOTParser;
+import spot.parser.SPOTParser.SemiContext;
+import spot.util.state.IStateful;
 
 public class SSClassSpecifier_SSHIdentifierList extends ScopeStateBase {
 	protected TagClass currentClass;

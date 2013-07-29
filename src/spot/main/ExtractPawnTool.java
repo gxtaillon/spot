@@ -1,17 +1,16 @@
-package main;
+package spot.main;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
-import lang.state.SSGlobal;
-
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
 
-import parser.*;
-import util.state.IState;
-import util.state.IStateful;
+import spot.lang.state.SSGlobal;
+import spot.parser.*;
+import spot.util.state.IState;
+import spot.util.state.IStateful;
 
 public class ExtractPawnTool {
 	public static void main(String[] args) throws Exception {

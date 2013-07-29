@@ -1,12 +1,12 @@
-package lang.state;
+package spot.lang.state;
 
 import org.antlr.v4.runtime.TokenStream;
 
-import parser.SPOTParser;
-import lang.EVisibility;
-import lang.Scope;
-import lang.TagClass;
-import main.IStatefulExtractor;
+import spot.lang.EVisibility;
+import spot.lang.Scope;
+import spot.lang.TagClass;
+import spot.main.IStatefulExtractor;
+import spot.parser.SPOTParser;
 
 public class SSClassSpecifier extends ScopeStateBase {
 	protected TagClass currentClass;

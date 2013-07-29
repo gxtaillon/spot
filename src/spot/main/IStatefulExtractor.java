@@ -1,8 +1,8 @@
-package main;
+package spot.main;
 
-import lang.state.ScopeStateBase;
-import parser.SPOTParser;
-import util.state.IStateful;
+import spot.lang.state.ScopeStateBase;
+import spot.parser.SPOTParser;
+import spot.util.state.IStateful;
 
 // Too much?
 public interface IStatefulExtractor extends IStateful {

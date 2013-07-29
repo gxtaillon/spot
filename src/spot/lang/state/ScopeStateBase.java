@@ -1,232 +1,227 @@
-package main;
+package spot.lang.state;
 
-import org.antlr.v4.runtime.tree.TerminalNode;
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.TokenStream;
+import org.antlr.v4.runtime.tree.*;
 
-import lang.state.SSGlobal;
-import lang.state.ScopeStateBase;
-import parser.SPOTBaseListener;
-import parser.SPOTParser;
-import util.state.IState;
-import util.state.IStateful;
+import spot.lang.*;
+import spot.main.ExtractPawnListener;
+import spot.main.ExtractorConfig;
+import spot.main.IStatefulExtractor;
+import spot.parser.*;
+import spot.util.state.IState;
+import spot.util.state.IStateful;
 
-// Regex to implement adapter 
-//		Find: 	(((enter|exit).*?)\(([\r\n\s]*.*?)\{)([\r\s\n]*.*?\})
-//		Rep:	$1\ncurrentState.$2(ctx);\n$5
-public class StatefulPawnExtractor extends SPOTBaseListener implements
-		IStatefulExtractor {
-	private SPOTParser parser;
-	private ExtractorConfig config;
-	private ScopeStateBase currentState;
+public abstract class ScopeStateBase extends SPOTBaseListener implements IState {
+	protected StringBuilder currentBuilder;
+	protected Scope currentScope;
+	protected ScopeStateBase previousState;
+	private IStatefulExtractor source;
 
-	public StatefulPawnExtractor(SPOTParser _parser, ExtractorConfig _config) {
-		parser = _parser;
-		config = _config;
-		setState(new SSGlobal(this));
-	}
-
-	@Override
-	public void setState(IState state) {
-		currentState = (ScopeStateBase) state;
-	}
-
-	@Override
-	public SPOTParser getParser() {
-		return parser;
-	}
-
-	@Override
-	public ExtractorConfig getConfig() {
-		return config;
-	}
-
-	@Override
-	public ScopeStateBase getCurrentState() {
-		return currentState;
-	}
-
-	@Override
-	public String getTranslation() {
-		return currentState.getCurrentBuilder().toString();
+	public ScopeStateBase(IStatefulExtractor _source, ScopeStateBase _previousState) {
+		source = _source;
+		currentBuilder = new StringBuilder();
+		currentScope = new Scope();
+		previousState = _previousState;
 	}
 	
-	// GRAMMAR RULES
+	/**
+	 * Should be called when the current state is exiting its last node to 
+	 * return control to its previous state.
+	 */
+	protected void ret/*urn*/() {
+		// Save the builder!
+		previousState.currentBuilder.append(currentBuilder);
+		
+		// Return control
+		getSourceExtractor().setState(previousState);
+	}
+
+	public StringBuilder getCurrentBuilder() {
+		return currentBuilder;
+	}
 
 	@Override
+	public IStateful getSource() {
+		return source;
+	}
+
+	public IStatefulExtractor getSourceExtractor() {
+		return (IStatefulExtractor) source;
+	}
+	
+	public ExtractorConfig getSourceConfig() {
+		return getSourceExtractor().getConfig();
+	}
+
+	/**
+	 * Appends the current rule "as is" to the current builder along with a
+	 * trailing space.
+	 * 
+	 * @param ctx
+	 * @return the current rule.
+	 */
+	protected String asis(ParserRuleContext ctx) {
+		TokenStream tokens = getSourceExtractor().getParser().getTokenStream();
+		String tmp = tokens.getText(ctx);
+		currentBuilder.append(' ');
+		currentBuilder.append(tmp);
+		currentBuilder.append(' ');
+		return tmp;
+	}
+	
+	protected String asis(TerminalNode node) {
+		return asis(node, " ");
+	}
+	
+	protected String asis(TerminalNode node, String postfix) {
+		String tmp = node.getText();
+		currentBuilder.append(' ');
+		currentBuilder.append(tmp);
+		currentBuilder.append(postfix);
+		return tmp;
+	}
+	
+	protected void pawnDefine(String identifier, String value) {
+		currentBuilder.append("#define ");
+		currentBuilder.append(identifier);
+		currentBuilder.append("\t");
+		currentBuilder.append(value);
+		currentBuilder.append("\n");
+	}
+	
+	// LISTENER METHODS
+	
+	@Override
 	public void visitTerminal(TerminalNode node) {
+		// Print line directive asis when they are encountered
+		if (node.getText().startsWith("#")) {
+			asis(node, "\n");
+		}		
 	}
 
 	@Override
 	public void exitCompilationUnit(SPOTParser.CompilationUnitContext ctx) {
-		currentState.exitCompilationUnit(ctx);
-
+		
 	}
 
 	@Override
 	public void exitExpressionStatement(
 			SPOTParser.ExpressionStatementContext ctx) {
-		currentState.exitExpressionStatement(ctx);
-
 	}
 
 	@Override
 	public void enterDeclaration(SPOTParser.DeclarationContext ctx) {
-		currentState.enterDeclaration(ctx);
 
 	}
 
 	@Override
 	public void exitDeclaration(SPOTParser.DeclarationContext ctx) {
-		currentState.exitDeclaration(ctx);
 
 	}
 
 	@Override
 	public void exitDeclarator(SPOTParser.DeclaratorContext ctx) {
-		currentState.exitDeclarator(ctx);
 
 	}
 
 	@Override
 	public void enterFunctionDeclarator(SPOTParser.FunctionDeclaratorContext ctx) {
-		currentState.enterFunctionDeclarator(ctx);
 
 	}
 
 	@Override
 	public void exitFunctionDeclarator(SPOTParser.FunctionDeclaratorContext ctx) {
-		currentState.exitFunctionDeclarator(ctx);
 
 	}
 
 	@Override
 	public void enterTagSpecifier(SPOTParser.TagSpecifierContext ctx) {
-		currentState.enterTagSpecifier(ctx);
-
 	}
 
 	@Override
 	public void enterStorageClassSpecifier(
 			SPOTParser.StorageClassSpecifierContext ctx) {
-		currentState.enterStorageClassSpecifier(ctx);
-
 	}
 
 	@Override
 	public void enterClassSpecifier(SPOTParser.ClassSpecifierContext ctx) {
-		currentState.enterClassSpecifier(ctx);
-
 	}
 
 	@Override
 	public void exitClassSpecifier(SPOTParser.ClassSpecifierContext ctx) {
-		currentState.exitClassSpecifier(ctx);
-
 	}
 
 	@Override
 	public void enterClassDeclaration(SPOTParser.ClassDeclarationContext ctx) {
-		currentState.enterClassDeclaration(ctx);
-
 	}
 
 	@Override
 	public void exitClassDeclaration(SPOTParser.ClassDeclarationContext ctx) {
-		currentState.exitClassDeclaration(ctx);
-
 	}
 
 	@Override
 	public void enterIdentifierList(SPOTParser.IdentifierListContext ctx) {
-		currentState.enterIdentifierList(ctx);
-
 	}
 
 	@Override
 	public void enterFunctionDefinition(SPOTParser.FunctionDefinitionContext ctx) {
-		currentState.enterFunctionDefinition(ctx);
-
 	}
 
 	@Override
 	public void exitFunctionDefinition(SPOTParser.FunctionDefinitionContext ctx) {
-		currentState.exitFunctionDefinition(ctx);
-
 	}
 
 	@Override
 	public void enterParameterDeclaration(
 			SPOTParser.ParameterDeclarationContext ctx) {
-		currentState.enterParameterDeclaration(ctx);
-
 	}
 
 	@Override
 	public void exitParameterDeclaration(
 			SPOTParser.ParameterDeclarationContext ctx) {
-		currentState.exitParameterDeclaration(ctx);
-
 	}
 
 	@Override
 	public void enterDirectDeclarator(SPOTParser.DirectDeclaratorContext ctx) {
-		currentState.enterDirectDeclarator(ctx);
-
 	}
 
 	@Override
 	public void enterCompoundStatement(SPOTParser.CompoundStatementContext ctx) {
-		currentState.enterCompoundStatement(ctx);
-
 	}
 
 	@Override
 	public void exitCompoundStatement(SPOTParser.CompoundStatementContext ctx) {
-		currentState.exitCompoundStatement(ctx);
-
 	}
 
 	@Override
 	public void enterJumpStatement(SPOTParser.JumpStatementContext ctx) {
-		currentState.enterJumpStatement(ctx);
-
 	}
 
 	@Override
 	public void exitJumpStatement(SPOTParser.JumpStatementContext ctx) {
-		currentState.exitJumpStatement(ctx);
-
 	}
 
 	@Override
 	public void enterPrimaryExpression(SPOTParser.PrimaryExpressionContext ctx) {
-		currentState.enterPrimaryExpression(ctx);
-
 	}
 
 	@Override
 	public void enterPostfixExpressionDot(
 			SPOTParser.PostfixExpressionDotContext ctx) {
-		currentState.enterPostfixExpressionDot(ctx);
-
 	}
 
 	@Override
 	public void enterPostfixExpression(SPOTParser.PostfixExpressionContext ctx) {
-		currentState.enterPostfixExpression(ctx);
-
 	}
 
 	@Override
 	public void exitPostfixExpression(SPOTParser.PostfixExpressionContext ctx) {
-		currentState.exitPostfixExpression(ctx);
-
 	}
 
 	@Override
 	public void enterPostfixExpressionArgs(
 			SPOTParser.PostfixExpressionArgsContext ctx) {
-		currentState.enterPostfixExpressionArgs(ctx);
-
 	}
 
 	// pseudo terminals
@@ -234,157 +229,131 @@ public class StatefulPawnExtractor extends SPOTBaseListener implements
 	@Override
 	public void enterTypeAccessQualifier(
 			SPOTParser.TypeAccessQualifierContext ctx) {
-		currentState.enterTypeAccessQualifier(ctx);
-
+		asis(ctx);
 	}
 
 	@Override
 	public void enterLpar(SPOTParser.LparContext ctx) {
-		currentState.enterLpar(ctx);
-
+		asis(ctx);
 	}
 
 	@Override
 	public void enterRpar(SPOTParser.RparContext ctx) {
-		currentState.enterRpar(ctx);
-
+		asis(ctx);
 	}
 
 	@Override
 	public void enterStar(SPOTParser.StarContext ctx) {
-		currentState.enterStar(ctx);
-
+		asis(ctx);
 	}
 
 	@Override
 	public void enterDiv(SPOTParser.DivContext ctx) {
-		currentState.enterDiv(ctx);
-
+		asis(ctx);
 	}
 
 	@Override
 	public void enterMod(SPOTParser.ModContext ctx) {
-		currentState.enterMod(ctx);
-
+		asis(ctx);
 	}
 
 	@Override
 	public void enterPlus(SPOTParser.PlusContext ctx) {
-		currentState.enterPlus(ctx);
-
+		asis(ctx);
 	}
 
 	@Override
 	public void enterMinus(SPOTParser.MinusContext ctx) {
-		currentState.enterMinus(ctx);
-
+		asis(ctx);
 	}
 
 	@Override
 	public void enterShiftr(SPOTParser.ShiftrContext ctx) {
-		currentState.enterShiftr(ctx);
-
+		asis(ctx);
 	}
 
 	@Override
 	public void enterShiftl(SPOTParser.ShiftlContext ctx) {
-		currentState.enterShiftl(ctx);
-
+		asis(ctx);
 	}
 
 	@Override
 	public void enterLess(SPOTParser.LessContext ctx) {
-		currentState.enterLess(ctx);
-
+		asis(ctx);
 	}
 
 	@Override
 	public void enterMore(SPOTParser.MoreContext ctx) {
-		currentState.enterMore(ctx);
-
+		asis(ctx);
 	}
 
 	@Override
 	public void enterLeeq(SPOTParser.LeeqContext ctx) {
-		currentState.enterLeeq(ctx);
-
+		asis(ctx);
 	}
 
 	@Override
 	public void enterMoeq(SPOTParser.MoeqContext ctx) {
-		currentState.enterMoeq(ctx);
-
+		asis(ctx);
 	}
 
 	@Override
 	public void enterEqeq(SPOTParser.EqeqContext ctx) {
-		currentState.enterEqeq(ctx);
-
+		asis(ctx);
 	}
 
 	@Override
 	public void enterNoteq(SPOTParser.NoteqContext ctx) {
-		currentState.enterNoteq(ctx);
-
+		asis(ctx);
 	}
 
 	@Override
 	public void enterAnd(SPOTParser.AndContext ctx) {
-		currentState.enterAnd(ctx);
-
+		asis(ctx);
 	}
 
 	@Override
 	public void enterCaret(SPOTParser.CaretContext ctx) {
-		currentState.enterCaret(ctx);
-
+		asis(ctx);
 	}
 
 	@Override
 	public void enterOr(SPOTParser.OrContext ctx) {
-		currentState.enterOr(ctx);
-
+		asis(ctx);
 	}
 
 	@Override
 	public void enterAndand(SPOTParser.AndandContext ctx) {
-		currentState.enterAndand(ctx);
-
+		asis(ctx);
 	}
 
 	@Override
 	public void enterOror(SPOTParser.OrorContext ctx) {
-		currentState.enterOror(ctx);
-
+		asis(ctx);
 	}
 
 	@Override
 	public void enterQuestion(SPOTParser.QuestionContext ctx) {
-		currentState.enterQuestion(ctx);
-
+		asis(ctx);
 	}
 
 	@Override
 	public void enterSemi(SPOTParser.SemiContext ctx) {
-		currentState.enterSemi(ctx);
-
+		asis(ctx);
 	}
 
 	@Override
 	public void enterEq(SPOTParser.EqContext ctx) {
-		currentState.enterEq(ctx);
-
+		asis(ctx);
 	}
 
 	@Override
 	public void enterComa(SPOTParser.ComaContext ctx) {
-		currentState.enterComa(ctx);
-
+		asis(ctx);
 	}
 
 	@Override
 	public void enterAssignmentOperator(SPOTParser.AssignmentOperatorContext ctx) {
-		currentState.enterAssignmentOperator(ctx);
-
+		asis(ctx);
 	}
 }

@@ -1,6 +1,6 @@
 // Generated from SPOT.g4 by ANTLR 4.1
 
-    package parser;
+    package spot.parser;
 
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.CharStream;

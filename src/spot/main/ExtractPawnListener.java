@@ -1,8 +1,11 @@
-package main;
+package spot.main;
 
-import parser.*;
-import util.state.IState;
-import util.state.IStateful;
+import spot.lang.*;
+import spot.lang.state.SSGlobal;
+import spot.lang.state.ScopeStateBase;
+import spot.parser.*;
+import spot.util.state.IState;
+import spot.util.state.IStateful;
 
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.misc.NotNull;
@@ -10,10 +13,6 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.lang.StringBuilder;
 import java.util.*;
-
-import lang.*;
-import lang.state.SSGlobal;
-import lang.state.ScopeStateBase;
 
 public class ExtractPawnListener extends SPOTBaseListener implements IStateful {
 	@Deprecated

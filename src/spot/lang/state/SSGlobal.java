@@ -1,9 +1,9 @@
-package lang.state;
+package spot.lang.state;
 
-import main.IStatefulExtractor;
-import parser.SPOTParser;
-import parser.SPOTParser.ClassSpecifierContext;
-import util.state.IStateful;
+import spot.main.IStatefulExtractor;
+import spot.parser.SPOTParser;
+import spot.parser.SPOTParser.ClassSpecifierContext;
+import spot.util.state.IStateful;
 
 public class SSGlobal extends ScopeStateBase {
 	StringBuilder headerBuilder;

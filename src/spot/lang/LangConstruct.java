@@ -1,4 +1,4 @@
-package lang;
+package spot.lang;
 public class LangConstruct {
     public String identifier;
     

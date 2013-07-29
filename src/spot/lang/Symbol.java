@@ -1,4 +1,4 @@
-package lang;
+package spot.lang;
 public class Symbol {
     public String symbol;
     public SymbolType type;

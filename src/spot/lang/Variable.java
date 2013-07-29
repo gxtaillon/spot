@@ -1,4 +1,4 @@
-package lang;
+package spot.lang;
 public class Variable extends LangConstruct {
     public Tag tag;
     public EVisibility vis;
