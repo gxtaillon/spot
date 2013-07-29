@@ -8,11 +8,11 @@ import parser.SPOTParser;
 import parser.SPOTParser.SemiContext;
 import util.state.IStateful;
 
-public class SSClassSpecifier_SSHIdentifierList extends ScopeStateBase {
+public class SSClassSpecifier_SSHFunctionDefinition extends ScopeStateBase {
 	protected TagClass currentClass;
 	protected EVisibility currentVis;
 	
-	public SSClassSpecifier_SSHIdentifierList(IStatefulExtractor _source, ScopeStateBase _previousState, TagClass _currentClass, EVisibility _currentVis) {
+	public SSClassSpecifier_SSHFunctionDefinition(IStatefulExtractor _source, ScopeStateBase _previousState, TagClass _currentClass, EVisibility _currentVis) {
 		super(_source, _previousState);
 		currentClass = _currentClass;
 		currentVis = _currentVis;
