@@ -13,69 +13,45 @@ Here is an exemple of a translation:
 <table>
 <tr>
 <th>SourcePawn Object</th>
-<th>SourcePawn</th>
 </tr>
 <tr>
 <td>
 <pre>
 class Demo {
-    myValue;
-    Bool:truth1, truth2;
+    __public myValue;
+    __public Bool:truth1, truth2;
 
-    public getMyValue(Demo:this) { 
+    __public public getMyValue(Demo:this) { 
         return this.myValue; 
     }
-    public setTruth1(Demo:this, _truth1) { 
+    
+    // Since public is already used by pawn, __public, __private and __protected are used to indicated the members visibility
+    __public public setTruth1(Demo:this, _truth1) { 
         return this.truth1 = _truth1; 
     }
 };
 
 testObject() {
+    // Declaration and instanciation of the class Demo
     new Demo:myDemo = Demo();
-    myDemo.myValue = 123;
-    new aValue = myDemo.myValue;
-    new shouldBeTrue = aValue == myDemo.getMyValue();
-    myDemo.setTruth1(shouldBeTrue);
-    myDemo.dtor();
-}
-</pre>
-</td><td>
-<pre>
-...
-
-#define _SPO_Class_Demo__SPO_Id #A number#
-#define _SPO_Class_Demo__SPO_Size 4
-#define _SPO_Class_Demo_myValue 1
-#define _SPO_Class_Demo_truth1 2
-#define _SPO_Class_Demo_truth2 3
-
-Class_Demo_ctor() {
-    _SPO_NewC(this, _SPO_Class_Demo__SPO_Size);
-    _SPO_DerefC(this) = _SPO_Class_Demo__SPO_Id;
-    // BEGIN USER
-    // END USER
-    return this;
-}
-
-Class_Demo_dtor(this) {
-    // BEGIN USER
-    // END USER
-    _SPO_FreeC(this, _SPO_Class_Demo__SPO_Size);
-}
-
-public Class_Demo_getMyValue(this) { 
-    return _SPO_DerefC(this + _SPO_Class_Demo_myValue + _SPO_iGet(_SPO_Class_Demo__SPO_Id, _SPO_DerefC(this)))
-}
-public Class_Demo_setTruth1(this, _truth1) { 
-    return _SPO_DerefC(this + _SPO_Class_Demo_truth1+ _SPO_iGet(_SPO_Class_Demo__SPO_Id, _SPO_DerefC(this))) = _truth1;
-}
     
-testObject() {
-    new myDemo = Class_Demo_ctor();
-    _SPO_DerefC(myDemo + _SPO_Class_Demo_myValue + _SPO_iGet(_SPO_Class_Demo__SPO_Id, _SPO_DerefC(this))) = 123;
-    new aValue = _SPO_DerefC(myDemo + _SPO_Class_Demo_myValue + _SPO_iGet(_SPO_Class_Demo__SPO_Id, _SPO_DerefC(this)));
-    new shouldBeTrue = aValue == Class_Demo_getMyValue(myDemo);
-    Class_Demo_setTruth1(myDemo, shouldBeTrue);
+    // Writing to a member
+    myDemo.myValue = 123;
+    
+    // Reading from a member 
+    new aValue = myDemo.myValue;
+    
+    // Calling a member and retrieving its return value
+    new shouldBeTrue = aValue == myDemo.getMyValue();
+    
+    // Calling with parameters
+    myDemo.setTruth1(shouldBeTrue);
+    
+    // Releasing the instance's resources (very important!)
+    myDemo.dtor();
+    // When instanciating a class, a block of memory is allocated to 
+    //  hold its data and a "pointer" is returned to indicate where to find it.
+    //  The pointer's data has to be freed.
 }
 </pre>
 </td>
