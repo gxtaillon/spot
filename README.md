@@ -43,7 +43,7 @@ testObject() {
 <pre>
 ...
 
-#define _SPO_Class_Demo__SPO_Id 0
+#define _SPO_Class_Demo__SPO_Id <A number>
 #define _SPO_Class_Demo__SPO_Size 4
 #define _SPO_Class_Demo_myValue 1
 #define _SPO_Class_Demo_truth1 2
