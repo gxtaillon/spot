@@ -1,5 +1,5 @@
 package spot.util.state;
 
 public interface IStateful {
-	void setState(IState state);
+    void setState(IState state);
 }

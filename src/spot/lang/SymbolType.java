@@ -1,3 +1,5 @@
 package spot.lang;
 
-public enum SymbolType { Variable, Function }
+public enum SymbolType {
+    Variable, Function
+}

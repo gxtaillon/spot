@@ -19,8 +19,8 @@ public class SSClassSpecifier extends ScopeStateBase {
 		String up = getSourceConfig().getUniversalPrefix();
 		currentClass = new TagClass(up + TagClass.getPawnEnumId(classId));
 		
-		
-		pawnDefine(currentClass.identifier + up + "Id", Integer.toString(currentClass.getUId()));		
+		pawnCommentLine("BEGIN CLASS " + currentClass.identifier);
+		pawnDefine(currentClass.identifier + up + "Id", Integer.toString(currentClass.getUId()));
 	}
 
 	@Override
@@ -28,7 +28,9 @@ public class SSClassSpecifier extends ScopeStateBase {
 		String up = getSourceConfig().getUniversalPrefix();
 		
 		// Define the size
-		pawnDefine(currentClass.identifier + up + "Size", Integer.toString(currentClass.variables.size()));	
+		pawnDefine(currentClass.identifier + up + "Size", Integer.toString(currentClass.variables.size()));
+		pawnCommentLine("END CLASS " + currentClass.identifier);
+		pawnLine();
 
 		ret();
 	}
@@ -41,14 +43,12 @@ public class SSClassSpecifier extends ScopeStateBase {
 				? EVisibility.getVisFromToken(ctx.classVisibility().toString())
 				: null;
 		
-		// If we are parsing variables
 		if (ctx.identifierList() != null) {
-			//TokenStream tokens = getSourceListener().parser.getTokenStream();
-			//String currentTag = (ctx.tagSpecifier() != null) ? tokens.getText(ctx.tagSpecifier()) : "";
-			
+			// Parsing variables
 			getSourceExtractor().setState(new SSClassSpecifier_SSHIdentifierList(getSourceExtractor(), this, currentClass, vis));
 		} else if (ctx.functionDefinition() != null) {
-			
+			// Parsing a function
+			getSourceExtractor().setState(new SSClassSpecifier_SSHFunctionDefinition(getSourceExtractor(), this, currentClass, vis));
 		}		
 	}
 }

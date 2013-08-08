@@ -31,7 +31,7 @@
 grammar SPOT;
 
 @header {
-    package parser;
+    package spot.parser;
 }
 
 primaryExpression
@@ -321,8 +321,8 @@ typeQualifier
 
 typeAccessQualifier
     :   'public'
-    |   'private'
-    |   'protected'
+    |   'stock'
+    |   'native'
     ;
 
 functionSpecifier
@@ -404,9 +404,7 @@ parameterList
     ;
 
 parameterDeclaration
-    :   declarationSpecifiers declarator
-    |   declarationSpecifiers2 abstractDeclarator? assignmentExpression?
-    |   assignmentExpression
+    :   assignmentExpression
     ;
 
 identifierList
@@ -419,22 +417,22 @@ typeName
     ;
 
 abstractDeclarator
-    :   pointer
-    |   pointer? directAbstractDeclarator gccDeclaratorExtension*
+    :   /*pointer
+    |   pointer?*/ directAbstractDeclarator /*gccDeclaratorExtension**/
     ;
 
 directAbstractDeclarator
-    :   '(' abstractDeclarator ')' gccDeclaratorExtension*
+    :   '(' abstractDeclarator ')' /*gccDeclaratorExtension**/
     |   '[' typeQualifierList? assignmentExpression? ']'
     |   '[' 'static' typeQualifierList? assignmentExpression ']'
     |   '[' typeQualifierList 'static' assignmentExpression ']'
     |   '[' '*' ']'
-    |   '(' parameterTypeList? ')' gccDeclaratorExtension*
+    |   '(' parameterTypeList? ')' /*gccDeclaratorExtension**/
     |   directAbstractDeclarator '[' typeQualifierList? assignmentExpression? ']'
     |   directAbstractDeclarator '[' 'static' typeQualifierList? assignmentExpression ']'
     |   directAbstractDeclarator '[' typeQualifierList 'static' assignmentExpression ']'
     |   directAbstractDeclarator '[' '*' ']'
-    |   directAbstractDeclarator '(' parameterTypeList? ')' gccDeclaratorExtension*
+    |   directAbstractDeclarator '(' parameterTypeList? ')' /*gccDeclaratorExtension**/
     ;
 
 typedefName

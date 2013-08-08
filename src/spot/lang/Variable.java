@@ -1,8 +1,9 @@
 package spot.lang;
+
 public class Variable extends LangConstruct {
     public Tag tag;
     public EVisibility vis;
-    
+
     public Variable(String _identifier) {
         this(_identifier, getDefaultVis());
     }
@@ -17,11 +18,12 @@ public class Variable extends LangConstruct {
         vis = _vis == null ? getDefaultVis() : _vis;
     }
 
+    @Override
     public String toPawn() {
         return tag.toPawn() + identifier;
     }
 
     private static EVisibility getDefaultVis() {
-    	return EVisibility.Private;
+        return EVisibility.Private;
     }
 }

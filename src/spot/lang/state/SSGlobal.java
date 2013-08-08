@@ -17,6 +17,8 @@ public class SSGlobal extends ScopeStateBase {
 		headerBuilder.append("#include \"" + pc + "memory.sp\"\n");
 		headerBuilder.append("#include \"" + pc + "oo.sp\"\n");
 		headerBuilder.append("\n");
+		headerBuilder.append("#pragma semicolon 1\n");
+		headerBuilder.append("\n");
 	}
 
 	@Override 

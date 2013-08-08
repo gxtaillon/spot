@@ -1,5 +1,7 @@
 package spot.lang.state;
 
+import java.nio.file.attribute.AclEntry.Builder;
+
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.tree.*;
@@ -32,6 +34,7 @@ public abstract class ScopeStateBase extends SPOTBaseListener implements IState 
 	protected void ret/*urn*/() {
 		// Save the builder!
 		previousState.currentBuilder.append(currentBuilder);
+		currentBuilder.delete(0, currentBuilder.length());
 		
 		// Return control
 		getSourceExtractor().setState(previousState);
@@ -82,12 +85,39 @@ public abstract class ScopeStateBase extends SPOTBaseListener implements IState 
 		return tmp;
 	}
 	
+	protected void pawnLine() {
+		pawnLine(currentBuilder, 1);
+	}
+	
+	protected void pawnLine(int qty) {
+		pawnLine(currentBuilder, qty);
+	}
+	
+	protected void pawnLine(StringBuilder builder, int qty) {
+		for (int i = 0; i != qty; ++i) {
+			builder.append("\n");
+		}
+	}
+	protected void pawnCommentLine(String text) {
+		pawnCommentLine(currentBuilder, text);
+	}
+	
+	protected void pawnCommentLine(StringBuilder builder, String text) {
+		builder.append("// ");
+		builder.append(text);
+		pawnLine();
+	}
+
 	protected void pawnDefine(String identifier, String value) {
-		currentBuilder.append("#define ");
-		currentBuilder.append(identifier);
-		currentBuilder.append("\t");
-		currentBuilder.append(value);
-		currentBuilder.append("\n");
+		pawnDefine(currentBuilder,  identifier, value);
+	}
+	
+	protected void pawnDefine(StringBuilder builder, String identifier, String value) {		
+		builder.append("#define ");
+		builder.append(identifier);
+		builder.append("\t");
+		builder.append(value);
+		pawnLine();
 	}
 	
 	// LISTENER METHODS

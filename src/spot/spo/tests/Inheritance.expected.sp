@@ -1,6 +1,8 @@
 #include "../core/memory.sp"
 #include "../core/oo.sp"
 
+#pragma semicolon 1
+
 #define _SPO_Data_iTableSize	    3
 
 // This grows at n^2 rate. Where n is the # of classes
