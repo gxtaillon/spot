@@ -9,7 +9,7 @@ This means once compiled, an SPO (SourcePawn Object) script has very little over
 
 It is in a very early state. Expect some bugs.
 
-Here is an exemple of a translation:
+Here is an exemple of the new syntax:
 <table>
 <tr>
 <th>SourcePawn Object</th>
@@ -25,7 +25,9 @@ class Demo {
         return this.myValue; 
     }
     
-    // Since public is already used by pawn, __public, __private and __protected are used to indicated the members visibility
+    // Since public is already used by pawn, __public, __private and __protected 
+    //  are used to indicated the members visibility
+    // The following function will then be 
     __public public setTruth1(Demo:this, _truth1) { 
         return this.truth1 = _truth1; 
     }
