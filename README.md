@@ -27,14 +27,15 @@ class Demo {
     
     // Since public is already used by pawn, __public, __private and __protected 
     //  are used to indicated the members visibility
-    // The following function will then be 
+    // The following function will then be a public member and public function 
+    //  of the script. It could also be __public stock, __protected native, etc.
     __public public setTruth1(Demo:this, _truth1) { 
         return this.truth1 = _truth1; 
     }
 };
 
 testObject() {
-    // Declaration and instanciation of the class Demo
+    // Instanciation of class Demo
     new Demo:myDemo = Demo();
     
     // Writing to a member
@@ -64,8 +65,9 @@ More info
 ---------
 In its current state, SPOT is a parser/translator, has no concept of closure or scope and will only read an input an modify it on the fly to what it thinks should be the output. 
 
-It relies heavily on the ANTLR4 parser generator and on a modified version of the C.g4 grammar from Sam Harwell. The orginal version can be found at https://github.com/antlr/grammars-v4/blob/master/c/C.g4
 It is possible that some characters ( ``` ,;:.()[]{} ``` etc. ), or entire expressions, will disappear during the translation. If this happens to you or if you find any other bug please file an issue.
+
+It relies heavily on the ANTLR4 parser generator and on a modified version of the C.g4 grammar from Sam Harwell. The orginal version can be found at https://github.com/antlr/grammars-v4/blob/master/c/C.g4
 
 Usage
 -----
@@ -86,7 +88,7 @@ Planned features
 * Class polymorphism **
 * Interfaces
 * Interpretation of scopes
-* Classes as class variables ***
+* Classes as class variables ** ***
 
 Other features which could be fun to implement
 ----------------------------------------------
@@ -96,4 +98,5 @@ Other features which could be fun to implement
 Notes
 -----
 ** There is a working prototype written in pawn for this feature, but it must be added to the translator.
-*** With the new memory allocation manager this feature is now implicit since a class reference takes a single cell.
+
+*** With the new memory allocation manager this feature is now implicit since a pointer takes a single cell.
