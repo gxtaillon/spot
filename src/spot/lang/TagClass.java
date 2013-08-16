@@ -13,6 +13,11 @@ public class TagClass extends Tag {
     public Map<String, TagClass> parents;
     public Map<String, Variable> variables;
     public Map<String, Function> functions;
+    public String cleanIdentifier;
+
+    // Properties
+    public String pId;
+    public String pSize;
 
     public static String getPawnEnumId(String classId) {
         return PAWN_ENUM_PREFIX + classId + PAWN_ENUM_POSTFIX;

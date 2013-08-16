@@ -92,34 +92,38 @@ public abstract class ScopeStateBase extends SPOTBaseListener implements IState 
         pawnLine(currentBuilder, qty);
     }
 
-    protected void pawnLine(StringBuilder builder, int qty) {
+    protected static void pawnLine(StringBuilder builder, int qty) {
         for (int i = 0; i != qty; ++i) {
             builder.append("\n");
         }
+    }
+
+    protected static void pawnLine(StringBuilder builder) {
+        pawnLine(builder, 1);
     }
 
     protected void pawnCommentLine(String text) {
         pawnCommentLine(currentBuilder, text);
     }
 
-    protected void pawnCommentLine(StringBuilder builder, String text) {
+    protected static void pawnCommentLine(StringBuilder builder, String text) {
         builder.append("// ");
         builder.append(text);
-        pawnLine();
+        pawnLine(builder);
     }
 
     protected void pawnDefine(String identifier, String value) {
         pawnDefine(currentBuilder, identifier, value);
     }
 
-    protected void pawnDefine(StringBuilder builder,
+    protected static void pawnDefine(StringBuilder builder,
             String identifier,
             String value) {
         builder.append("#define ");
         builder.append(identifier);
         builder.append("\t");
         builder.append(value);
-        pawnLine();
+        pawnLine(builder);
     }
 
     // LISTENER METHODS
