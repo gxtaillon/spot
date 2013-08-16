@@ -1,24 +1,24 @@
 class A {
     a;
-    f(A:this, x) { return this.a + x; }
+    f(this, x) { return this.a + x; }
 };
 
 class B {
     b;
-    f(B:this, x) { return this.b * x; }
+    f(this, x) { return this.b * x; }
 };
 
 class AB : A, B {
     c;
-    ctor(AB:this) {
+    ctor(this) {
         this.a = 1330;
         this.c = 3;
     }
-    dtor(AB:this) {
+    dtor(this) {
         this.a = 0;
         this.c = 0;
     }
-    g(AB:this, x) {
+    g(this, x) {
         return this.c % (
             (A:this).f(x) +
             (B:this).f(x)

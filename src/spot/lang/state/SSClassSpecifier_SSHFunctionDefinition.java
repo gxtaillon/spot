@@ -47,8 +47,6 @@ public class SSClassSpecifier_SSHFunctionDefinition extends ScopeStateBase {
     // Refactor this ugly monster
     public void enterDirectDeclarator(DirectDeclaratorContext ctx) {
         if (ctx.Identifier() != null) {
-            TokenStream tokens = getSourceExtractor().getParser()
-                    .getTokenStream();
             String id = ctx.Identifier().getText();
 
             if (isFunctionDeclarator) {  // always true?
@@ -79,11 +77,16 @@ public class SSClassSpecifier_SSHFunctionDefinition extends ScopeStateBase {
     @Override
     public void enterParameterDeclaration(ParameterDeclarationContext ctx) {
         isParameter = true;
+
+        TokenStream tokens = getSourceExtractor().getParser()
+                .getTokenStream();
+        String parameter = tokens.getText(ctx);
+        
+        currentBuilder.append(parameter);        
     }
 
     @Override
     public void exitParameterDeclaration(SPOTParser.ParameterDeclarationContext ctx) {
-
         isParameter = false;
     }
 
@@ -133,11 +136,4 @@ public class SSClassSpecifier_SSHFunctionDefinition extends ScopeStateBase {
                     currentScope.tags.get(ctx.Identifier().getText()));
         }
     }
-
-    @Override
-    public void exitPrimaryExpression(PrimaryExpressionContext ctx) {
-        // TODO Auto-generated method stub
-        super.enterPrimaryExpression(ctx);
-    }
-
 }
