@@ -29,7 +29,7 @@ public class SSClassSpecifier extends ScopeStateBase {
         // Note that the tag exists for children states
         currentScope.tags.put(currentClass.identifier, currentClass);
 
-        pawnCommentLine("BEGIN CLASS " + currentClass.identifier);
+        pawnCommentLine(headerBuilder, "BEGIN CLASS " + currentClass.identifier);
 
         currentClass.pSize = currentClass.identifier + up + "Size";
         // Class ID
