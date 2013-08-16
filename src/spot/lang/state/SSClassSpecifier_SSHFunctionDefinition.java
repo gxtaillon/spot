@@ -5,10 +5,13 @@ import org.antlr.v4.runtime.TokenStream;
 import spot.lang.EVisibility;
 import spot.lang.Function;
 import spot.lang.TagClass;
+import spot.lang.Variable;
 import spot.main.IStatefulExtractor;
 import spot.parser.SPOTParser;
 import spot.parser.SPOTParser.DirectDeclaratorContext;
 import spot.parser.SPOTParser.ParameterDeclarationContext;
+import spot.parser.SPOTParser.PrimaryExpressionContext;
+import spot.parser.SPOTParser.TagSpecifierContext;
 
 public class SSClassSpecifier_SSHFunctionDefinition extends ScopeStateBase {
     protected TagClass currentClass;
@@ -16,6 +19,7 @@ public class SSClassSpecifier_SSHFunctionDefinition extends ScopeStateBase {
     protected boolean isFunctionDeclarator;
     protected boolean isParameter;
     protected Function currentFunction;
+    protected Variable currentParameter;
 
     public SSClassSpecifier_SSHFunctionDefinition(IStatefulExtractor _source,
             ScopeStateBase _previousState,
@@ -81,6 +85,19 @@ public class SSClassSpecifier_SSHFunctionDefinition extends ScopeStateBase {
         currentBuilder.append("}\n");
         // restoreScope();
         ret();
+    }
+
+    @Override
+    public void enterTagSpecifier(TagSpecifierContext ctx) {
+        if (isParameter) {            
+            currentParameter = new Variable("", EVisibility.Parameter, currentScope.tags.get(ctx.Identifier().getText()));
+        }
+    }
+
+    @Override
+    public void exitPrimaryExpression(PrimaryExpressionContext ctx) {
+        // TODO Auto-generated method stub
+        super.enterPrimaryExpression(ctx);
     }
 
 }

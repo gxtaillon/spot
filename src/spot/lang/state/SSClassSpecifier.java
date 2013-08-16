@@ -18,6 +18,9 @@ public class SSClassSpecifier extends ScopeStateBase {
 
         String up = getSourceConfig().getUniversalPrefix();
         currentClass = new TagClass(up + TagClass.getPawnEnumId(classId));
+        
+        // Note that the tag exists for children states
+        currentScope.tags.put(currentClass.identifier, currentClass);
 
         pawnCommentLine("BEGIN CLASS " + currentClass.identifier);
         pawnDefine(currentClass.identifier + up + "Id",
@@ -26,6 +29,9 @@ public class SSClassSpecifier extends ScopeStateBase {
 
     @Override
     public void exitClassSpecifier(SPOTParser.ClassSpecifierContext ctx) {
+        // Update the parent scope. (Maybe do this elsewhere?)
+        previousState.currentScope.tags.put(currentClass.identifier, currentClass);
+        
         String up = getSourceConfig().getUniversalPrefix();
 
         // Define the size
