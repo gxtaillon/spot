@@ -1,5 +1,5 @@
 package spot.lang;
 
-public enum SymbolType {
+public enum ESymbol {
     Variable, Function
 }

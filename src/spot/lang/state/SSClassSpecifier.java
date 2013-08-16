@@ -13,12 +13,14 @@ public class SSClassSpecifier extends ScopeStateBase {
     public static final String DEFAULT_DTOR_ID = "dtor";
     public static final String DEFAULT_THIS_ID = "this";
     protected TagClass currentClass;
+    protected StringBuilder headerBuilder;
 
     public SSClassSpecifier(IStatefulExtractor _source,
             Scope previousScope,
             ScopeStateBase _previousState,
             String classId) {
         super(_source, _previousState);
+        headerBuilder = new StringBuilder();
         previousScope.copyTo(currentScope);
 
         String up = getSourceConfig().getUniversalPrefix();
@@ -32,7 +34,7 @@ public class SSClassSpecifier extends ScopeStateBase {
         currentClass.pSize = currentClass.identifier + up + "Size";
         // Class ID
         currentClass.pId = currentClass.identifier + up + "Id";
-        pawnDefine(currentClass.pId, Integer.toString(currentClass.getUId()));
+        pawnDefine(headerBuilder, currentClass.pId, Integer.toString(currentClass.getUId()));
 
         currentClass.cleanIdentifier = classId;
     }
@@ -115,7 +117,7 @@ public class SSClassSpecifier extends ScopeStateBase {
         String up = getSourceConfig().getUniversalPrefix();
 
         // Class Size
-        pawnDefine(currentClass.pSize,
+        pawnDefine(headerBuilder, currentClass.pSize,
                 Integer.toString(currentClass.variables.size()));
         pawnLine();
 
@@ -149,6 +151,9 @@ public class SSClassSpecifier extends ScopeStateBase {
         // Mark the end of the class
         pawnCommentLine("END CLASS " + currentClass.identifier);
         pawnLine();
+        
+        headerBuilder.append(currentBuilder);
+        currentBuilder = headerBuilder;
 
         ret();
     }
