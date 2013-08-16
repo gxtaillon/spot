@@ -29,6 +29,7 @@ public class SSClassSpecifier extends ScopeStateBase {
 
         pawnCommentLine("BEGIN CLASS " + currentClass.identifier);
 
+        currentClass.pSize = currentClass.identifier + up + "Size";
         // Class ID
         currentClass.pId = currentClass.identifier + up + "Id";
         pawnDefine(currentClass.pId, Integer.toString(currentClass.getUId()));
@@ -114,7 +115,6 @@ public class SSClassSpecifier extends ScopeStateBase {
         String up = getSourceConfig().getUniversalPrefix();
 
         // Class Size
-        currentClass.pSize = currentClass.identifier + up + "Size";
         pawnDefine(currentClass.pSize,
                 Integer.toString(currentClass.variables.size()));
         pawnLine();
