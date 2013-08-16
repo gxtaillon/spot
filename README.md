@@ -75,7 +75,7 @@ Start a java instance using the ExtractPawnTool class and give it the path of th
 
 Implemented features
 --------------------
-* Class definition syntax :: class < ID > { < VAR | FUNC >* };
+* Class definition syntax :: class < ID > [ : < CLASSID > [ , < CLASSID > ] ] { < VAR | FUNC >* };
 * Class declaration syntax :: < new | decl > < CLASSID >:< ID >;
 * Class variable call syntax :: < ID >.< CLASSMEMBERID >
 * Class function call syntax :: < ID >.< CLASSMEMBERID >(< PARAM >*)
