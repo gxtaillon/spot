@@ -88,15 +88,11 @@ Planned features
 * Class polymorphism **
 * Interfaces
 * Interpretation of scopes
-* Classes as class variables ** ***
+* Classes as class variables ** and operator ```->``` for easy usage
+
+** There is a working prototype written in pawn for this feature, but it must be added to the translator.
 
 Other features which could be fun to implement
 ----------------------------------------------
 * Templates
 * Lambdas
-
-Notes
------
-** There is a working prototype written in pawn for this feature, but it must be added to the translator.
-
-*** With the new memory allocation manager this feature is now implicit since a pointer takes a single cell.
