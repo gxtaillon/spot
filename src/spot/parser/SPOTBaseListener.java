@@ -1501,6 +1501,19 @@ public class SPOTBaseListener implements SPOTListener {
 	 * <p/>
 	 * The default implementation does nothing.
 	 */
+	@Override public void enterAt(@NotNull SPOTParser.AtContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void exitAt(@NotNull SPOTParser.AtContext ctx) { }
+
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
 	@Override public void enterAbstractDeclarator(@NotNull SPOTParser.AbstractDeclaratorContext ctx) { }
 	/**
 	 * {@inheritDoc}

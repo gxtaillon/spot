@@ -23,8 +23,10 @@ public class TagClass extends Tag {
         return PAWN_ENUM_PREFIX + classId + PAWN_ENUM_POSTFIX;
     }
 
-    public static String getPawnFuncId(String funcId, String enumId) {
-        return enumId + funcId;
+    public static String getPawnFuncId(String funcId,
+            String enumId,
+            boolean isVerbatim) {
+        return isVerbatim ? funcId : enumId + funcId;
     }
 
     public TagClass(String _identifier) {

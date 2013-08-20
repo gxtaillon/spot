@@ -318,9 +318,9 @@ public class ExtractPawnListener extends SPOTBaseListener implements IStateful {
             if (isClass && isFunctionDeclarator) {
                 Tag tag = getCurrentScope().tags.get(CURRENT_CLASS);
                 String className = tag.identifier;
-                String funcName = TagClass.getPawnFuncId(id, className);
+                String funcName = TagClass.getPawnFuncId(id, className, false);
                 getCurrentScope().functions.put(TagClass.getPawnFuncId(id,
-                        className), new Function(funcName));
+                        className, false), new Function(funcName));
 
                 if (!isParameter) {
                     sb.append(funcName);
@@ -408,7 +408,7 @@ public class ExtractPawnListener extends SPOTBaseListener implements IStateful {
         Tag currentSymbol = getCurrentScope().tags.get(CURRENT_SYMBOL);
         Tag currentClass = getCurrentScope().tags.get(currentSymbol.identifier);
         Function func = getCurrentScope().functions.get(TagClass.getPawnFuncId(
-                id, currentClass.identifier));
+                id, currentClass.identifier, false));
 
         if (func != null) {
             sb.append(func.identifier);

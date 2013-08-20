@@ -1,5 +1,7 @@
 package spot.lang.state;
 
+import java.util.List;
+
 import spot.lang.API;
 import spot.lang.EVisibility;
 import spot.lang.Function;
@@ -42,6 +44,11 @@ public class SSClassSpecifier extends ScopeStateBase {
     public static void pawnUpperCtor(StringBuilder builder,
             String sizeMacro,
             String idMacro) {
+        // New instance check
+        builder.append("if (");
+        builder.append(DEFAULT_THIS_ID);
+        builder.append(" == null) {\n");
+        
         // Call to NewC
         builder.append(API.NewC);
         builder.append("(");
@@ -57,6 +64,9 @@ public class SSClassSpecifier extends ScopeStateBase {
         builder.append(") = ");
         builder.append(idMacro);
         builder.append(";\n");
+        
+        // Close check
+        builder.append("}\n");
 
         pawnCommentLine(builder, "BEGIN USER");
     }
@@ -134,7 +144,7 @@ public class SSClassSpecifier extends ScopeStateBase {
         }
 
         String dtorId = TagClass.getPawnFuncId(DEFAULT_DTOR_ID,
-                currentClass.identifier);
+                currentClass.identifier, false);
         if (!currentClass.functions.containsKey(dtorId)) {
             // There has not been any destructor defined
 

@@ -1265,6 +1265,17 @@ public interface SPOTListener extends ParseTreeListener {
 	void exitJumpStatement(@NotNull SPOTParser.JumpStatementContext ctx);
 
 	/**
+	 * Enter a parse tree produced by {@link SPOTParser#at}.
+	 * @param ctx the parse tree
+	 */
+	void enterAt(@NotNull SPOTParser.AtContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link SPOTParser#at}.
+	 * @param ctx the parse tree
+	 */
+	void exitAt(@NotNull SPOTParser.AtContext ctx);
+
+	/**
 	 * Enter a parse tree produced by {@link SPOTParser#abstractDeclarator}.
 	 * @param ctx the parse tree
 	 */

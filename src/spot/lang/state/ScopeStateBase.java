@@ -125,6 +125,19 @@ public abstract class ScopeStateBase extends SPOTBaseListener implements IState 
         builder.append(value);
         pawnLine(builder);
     }
+    
+    protected static void pawnFunction(StringBuilder builder, String funcId, String tagId, String params, String body) {
+        if (tagId != null) {
+            builder.append(tagId);
+            builder.append(":");
+        }
+        builder.append(funcId);
+        builder.append("(");
+        builder.append(params);
+        builder.append(") {\n");
+        builder.append(body);
+        builder.append("}\n");
+    }
 
     // LISTENER METHODS
 

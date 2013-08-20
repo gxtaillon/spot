@@ -1,16 +1,16 @@
 class A {
     a;
-    f(this, x) { return this.a + x; }
+    __public f(this, x) { return this.a + x; }
 };
 
 class B {
     b;
-    f(this, x) { return this.b * x; }
+    public f(this, x) { return this.b * x; }
 };
 
 class AB : A, B {
     c;
-    ctor(this) {
+    __public public ctor(this) {
         this.a = 1330;
         this.c = 3;
     }
@@ -18,7 +18,7 @@ class AB : A, B {
         this.a = 0;
         this.c = 0;
     }
-    g(this, x) {
+    stock @g(this, x) {
         return this.c % (
             (A:this).f(x) +
             (B:this).f(x)
@@ -27,19 +27,19 @@ class AB : A, B {
 };
 
 public OnPluginStart() {
-    new A:myA = A();
+    new A:myA = A(null);
     myA.a = 10;
     new Bool:shouldBe12 = myA.f(2) == 12;
     PrintToServer("myA.f(2) == 12 => %b", shouldBe12);
     myA.dtor();
     
-    new B:myB = B();
+    new B:myB = B(null);
     myB.b = 5;
     new Bool:shouldBe10 = myB.f(2) == 10;
     PrintToServer("myB.f(2) == 10 => %b", shouldBe10);
     myB.dtor();
     
-    new AB:myAB = AB();
+    new AB:myAB = AB(null);
     new Bool:shouldBe1 = myAB.g(2) == 1;
     PrintToServer("myAB.g(2) == 1 => %b", shouldBe1);
     

@@ -542,8 +542,9 @@ functionDefinition
     :   declarationSpecifiers? functionDeclarator declarationList? compoundStatement
     ;
 
+at : '@' ;
 functionDeclarator
-    : declarator
+    : at? declarator
     ;
 
 declarationList

@@ -9,6 +9,7 @@ import spot.lang.TagClass;
 import spot.lang.Variable;
 import spot.main.IStatefulExtractor;
 import spot.parser.SPOTParser;
+import spot.parser.SPOTParser.AtContext;
 import spot.parser.SPOTParser.DirectDeclaratorContext;
 import spot.parser.SPOTParser.ParameterDeclarationContext;
 import spot.parser.SPOTParser.PrimaryExpressionContext;
@@ -22,6 +23,7 @@ public class SSClassSpecifier_SSHFunctionDefinition extends ScopeStateBase {
     protected EFunction currentFunctionCategory;
     protected Function currentFunction;
     protected Variable currentParameter;
+    protected boolean isVerbatim;
 
     public SSClassSpecifier_SSHFunctionDefinition(IStatefulExtractor _source,
             ScopeStateBase _previousState,
@@ -41,6 +43,7 @@ public class SSClassSpecifier_SSHFunctionDefinition extends ScopeStateBase {
     @Override
     public void exitFunctionDeclarator(SPOTParser.FunctionDeclaratorContext ctx) {
         isFunctionDeclarator = false;
+        isVerbatim = ctx.at() != null;
     }
 
     @Override
@@ -50,24 +53,25 @@ public class SSClassSpecifier_SSHFunctionDefinition extends ScopeStateBase {
             String id = ctx.Identifier().getText();
 
             if (isFunctionDeclarator) {  // always true?
-                String funcName = TagClass.getPawnFuncId(id,
-                        currentClass.identifier);
-                currentFunction = new Function(funcName);
-                currentClass.functions.put(currentFunction.identifier,
-                        currentFunction);
-
                 if (isParameter) {
                     currentBuilder.append(id);
                 } else {
                     if (id.equals(SSClassSpecifier.DEFAULT_CTOR_ID)) {
                         currentFunctionCategory = EFunction.Constructor;
+
+                        currentFunction = new Function(currentClass.cleanIdentifier);
                         currentBuilder.append(currentClass.cleanIdentifier);
+                        currentClass.functions.put(currentClass.cleanIdentifier,
+                                currentFunction);
                     } else {
                         if (id.equals(SSClassSpecifier.DEFAULT_DTOR_ID)) {
                             currentFunctionCategory = EFunction.Destructor;
                         }
-
+                        String funcName = TagClass.getPawnFuncId(id,
+                                currentClass.identifier, isVerbatim);
                         currentBuilder.append(funcName);
+                        currentClass.functions.put(funcName,
+                                currentFunction);
                     }
                 }
             }
