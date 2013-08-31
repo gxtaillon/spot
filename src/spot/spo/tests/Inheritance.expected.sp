@@ -17,7 +17,7 @@ static _SPO_iTable[_SPO_Data_iTableSize][_SPO_Data_iTableSize] = { // const too?
 #define Class_A__SPO_Size   2       // Size of the class
 #define Class_A_a           1       // Position of this member in the class, NB index 0 is always occupied by the meta field.
 
-Class_A_ctor(this) {
+A(this) {
     if (this == null) {
         _SPO_NewC(this, Class_A__SPO_Size);
         _SPO_DerefC(this) = Class_A__SPO_Id;
@@ -41,7 +41,7 @@ Class_A_f(this, x) {
 #define Class_B__SPO_Size   2
 #define Class_B_b           1
 
-Class_B_ctor(this) {
+B(this) {
     if (this == null) {
         _SPO_NewC(this, Class_B__SPO_Size);
         _SPO_DerefC(this) = Class_B__SPO_Id;
@@ -67,7 +67,7 @@ Class_B_f(this, x) {
 #define Class_AB_b          2
 #define Class_AB_c          3
 
-Class_AB_ctor(this) {
+AB(this) {
     if (this == null) {
         _SPO_NewC(this, Class_AB__SPO_Size);
         _SPO_DerefC(this) = Class_AB__SPO_Id;
