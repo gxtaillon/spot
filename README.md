@@ -1,6 +1,8 @@
 SourcePawn Object Translator
 ====
 
+The current developpement branch is ```states``` (https://github.com/MomemtumMori/spot/tree/states).
+
 Quick info
 ----------
 SPOT will take a script looking like this and will translate it into a traditionnal SP script.
