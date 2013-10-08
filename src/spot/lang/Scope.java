@@ -3,8 +3,11 @@ package spot.lang;
 import java.util.HashMap;
 import java.util.Map;
 
+import spot.util.collection.tree.SimpleTree;
+
 public class Scope {
     public Map<String, Tag> tags;
+    public SimpleTree<TagClass> inheritanceTree;
     public Map<String, Function> functions;
     public Map<String, Variable> variables;
 
@@ -13,13 +16,13 @@ public class Scope {
                 new HashMap<String, Variable>());
     }
 
-    public Scope(Map<String, Tag> _tags,
+    protected Scope(Map<String, Tag> _tags,
             Map<String, Function> _functions,
             Map<String, Variable> _variables) {
         tags = _tags;
         functions = _functions;
         variables = _variables;
-    }
+    }    
 
     public Scope copyToNew() {
         return copyTo(new Scope());

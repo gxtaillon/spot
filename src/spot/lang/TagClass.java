@@ -1,7 +1,9 @@
 package spot.lang;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
+
+import spot.util.collection.tree.SimpleTree;
 
 public class TagClass extends Tag {
     public static final String PAWN_ENUM_PREFIX = "Class_";
@@ -30,18 +32,18 @@ public class TagClass extends Tag {
     }
 
     public TagClass(String _identifier) {
-        this(_identifier, new HashMap<String, Variable>());
+        this(_identifier, new LinkedHashMap<String, Variable>());
     }
 
     public TagClass(String _identifier, Map<String, Variable> _variables) {
-        this(_identifier, _variables, new HashMap<String, Function>());
+        this(_identifier, _variables, new LinkedHashMap<String, Function>());
     }
 
     public TagClass(String _identifier,
             Map<String, Variable> _variables,
             Map<String, Function> _functions) {
         this(_identifier, _variables, _functions,
-                new HashMap<String, TagClass>());
+                new LinkedHashMap<String, TagClass>());
     }
 
     public TagClass(String _identifier,

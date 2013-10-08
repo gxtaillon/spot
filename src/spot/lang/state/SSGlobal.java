@@ -1,14 +1,19 @@
 package spot.lang.state;
 
+import org.antlr.v4.runtime.TokenStream;
+
+import spot.lang.Scope;
 import spot.main.IStatefulExtractor;
 import spot.parser.SPOTParser;
 import spot.parser.SPOTParser.ClassSpecifierContext;
+import spot.parser.SPOTParser.CompoundStatementContext;
+import spot.parser.SPOTParser.DirectDeclaratorContext;
 
 public class SSGlobal extends ScopeStateBase {
     StringBuilder headerBuilder;
 
     public SSGlobal(IStatefulExtractor _source) {
-        super(_source, null);
+        super(_source, new Scope(), null);
 
         headerBuilder = new StringBuilder();
 
@@ -29,9 +34,27 @@ public class SSGlobal extends ScopeStateBase {
 
     @Override
     public void enterClassSpecifier(ClassSpecifierContext ctx) {
-        String classId = ctx.Identifier().toString();
         getSourceExtractor().setState(
                 new SSClassSpecifier(getSourceExtractor(), currentScope, this,
-                        classId));
+                        ctx));
+    }
+
+    @Override
+    public void enterDirectDeclarator(DirectDeclaratorContext ctx) {
+        if (ctx.Identifier() != null) {
+            TokenStream tokens = getSourceExtractor().getParser().getTokenStream();
+            String id = tokens.getText(ctx);        
+            currentBuilder.append(id);
+        }
+    }
+
+    @Override
+    public void enterCompoundStatement(CompoundStatementContext ctx) {
+        currentBuilder.append("{\n");
+    }
+
+    @Override
+    public void exitCompoundStatement(CompoundStatementContext ctx) {
+        currentBuilder.append("}\n");
     }
 }

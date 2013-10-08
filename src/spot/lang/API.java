@@ -12,4 +12,7 @@ public final class API {
     public static final String AllocationSize = "_SPO_AllocationSize";
     public static final String CopyTo = "_SPO_CopyTo";
     public static final String CopyFrom = "_SPO_CopyFrom";
+    public static final String iGet = "_SPO_iGet";
+
+    public static final String vHeap = "_SPO_Heap";
 }

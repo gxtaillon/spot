@@ -34,9 +34,11 @@ grammar SPOT;
     package spot.parser;
 }
 
+ntconstant : Constant ;
+
 primaryExpression
     :   tagSpecifier? Identifier
-    |   Constant
+    |   ntconstant
     |   StringLiteral+
     |   '(' expression ')'
     |   genericSelection
@@ -500,7 +502,7 @@ blockItem
     ;
 
 expressionStatement
-    :   expression? ';'
+    :   expression? semi
     ;
 
 selectionStatement
@@ -515,11 +517,15 @@ iterationStatement
     |   'for' '(' declaration expression? ';' expression? ')' statement
     ;
 
+ggoto : 'goto' ;
+ccontinue : 'continue' ;
+bbreak : 'break' ;
+rreturn : 'return' ;
 jumpStatement
-    :   Goto Identifier ';'
-    |   Continue ';'
-    |   Break ';'
-    |   Return expression? ';'
+    :   ggoto Identifier semi
+    |   ccontinue semi
+    |   bbreak semi
+    |   rreturn expression? semi
     ;
 
 compilationUnit
@@ -891,8 +897,13 @@ SChar
 
 LineDirective
     :   '#' Whitespace? DecimalConstant? Whitespace? StringLiteral? ~[\r\n]*
+    |   SPOTDirective
     ;
-
+    
+SPOTDirective
+    :   '##' Whitespace? DecimalConstant? Whitespace? StringLiteral? ~[\r\n]*
+    ;
+    
 Whitespace
     :   [ \t]+
         -> skip

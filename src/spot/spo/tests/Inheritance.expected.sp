@@ -3,19 +3,13 @@
 
 #pragma semicolon 1
 
-#define _SPO_Data_iTableSize	    3
-
-// This grows at n^2 rate. Where n is the # of classes
-static _SPO_iTable[_SPO_Data_iTableSize][_SPO_Data_iTableSize] = { // const too?
-	{0, _SPO_Const_iNotRelated, 0},
-	{_SPO_Const_iNotRelated, 0, 1},
-	{_SPO_Const_iNotRelated, _SPO_Const_iNotRelated, 0}
-};
-
 // Scrapping the enums for the new version since they cause way, way too many tag mismatches...
 #define Class_A__SPO_Id     0       // Id of the class
+#define Class_A__SPO_iId    0       // Inheritance Id, Represents the deepness of the class in the inheritance graph.    
 #define Class_A__SPO_Size   2       // Size of the class
 #define Class_A_a           1       // Position of this member in the class, NB index 0 is always occupied by the meta field.
+
+static _SPO_Class_A_iTable = { 0 };
 
 A(this) {
     if (this == null) {
@@ -38,6 +32,7 @@ Class_A_f(this, x) {
 }
 
 #define Class_B__SPO_Id     1
+#define Class_B__SPO_iId    0
 #define Class_B__SPO_Size   2
 #define Class_B_b           1
 
@@ -62,6 +57,7 @@ public Class_B_f(this, x) {
 }
 
 #define Class_AB__SPO_Id    2
+#define Class_AB__SPO_iId   1
 #define Class_AB__SPO_Size  4
 #define Class_AB_a          1
 #define Class_AB_b          2

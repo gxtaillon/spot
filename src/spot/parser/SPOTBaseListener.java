@@ -136,6 +136,19 @@ public class SPOTBaseListener implements SPOTListener {
 	 * <p/>
 	 * The default implementation does nothing.
 	 */
+	@Override public void enterRreturn(@NotNull SPOTParser.RreturnContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void exitRreturn(@NotNull SPOTParser.RreturnContext ctx) { }
+
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
 	@Override public void enterParameterList(@NotNull SPOTParser.ParameterListContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -448,6 +461,19 @@ public class SPOTBaseListener implements SPOTListener {
 	 * <p/>
 	 * The default implementation does nothing.
 	 */
+	@Override public void enterGgoto(@NotNull SPOTParser.GgotoContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void exitGgoto(@NotNull SPOTParser.GgotoContext ctx) { }
+
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
 	@Override public void enterDirectDeclarator(@NotNull SPOTParser.DirectDeclaratorContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -513,6 +539,19 @@ public class SPOTBaseListener implements SPOTListener {
 	 * <p/>
 	 * The default implementation does nothing.
 	 */
+	@Override public void enterCcontinue(@NotNull SPOTParser.CcontinueContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void exitCcontinue(@NotNull SPOTParser.CcontinueContext ctx) { }
+
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
 	@Override public void enterGccDeclaratorExtension(@NotNull SPOTParser.GccDeclaratorExtensionContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -559,6 +598,19 @@ public class SPOTBaseListener implements SPOTListener {
 	 * The default implementation does nothing.
 	 */
 	@Override public void exitEnumeratorList(@NotNull SPOTParser.EnumeratorListContext ctx) { }
+
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void enterBbreak(@NotNull SPOTParser.BbreakContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void exitBbreak(@NotNull SPOTParser.BbreakContext ctx) { }
 
 	/**
 	 * {@inheritDoc}
@@ -786,6 +838,19 @@ public class SPOTBaseListener implements SPOTListener {
 	 * <p/>
 	 * The default implementation does nothing.
 	 */
+	@Override public void enterInitializer(@NotNull SPOTParser.InitializerContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void exitInitializer(@NotNull SPOTParser.InitializerContext ctx) { }
+
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
 	@Override public void enterInitDeclaratorList(@NotNull SPOTParser.InitDeclaratorListContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -806,19 +871,6 @@ public class SPOTBaseListener implements SPOTListener {
 	 * The default implementation does nothing.
 	 */
 	@Override public void exitEq(@NotNull SPOTParser.EqContext ctx) { }
-
-	/**
-	 * {@inheritDoc}
-	 * <p/>
-	 * The default implementation does nothing.
-	 */
-	@Override public void enterInitializer(@NotNull SPOTParser.InitializerContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 * <p/>
-	 * The default implementation does nothing.
-	 */
-	@Override public void exitInitializer(@NotNull SPOTParser.InitializerContext ctx) { }
 
 	/**
 	 * {@inheritDoc}
@@ -1066,6 +1118,19 @@ public class SPOTBaseListener implements SPOTListener {
 	 * The default implementation does nothing.
 	 */
 	@Override public void exitShiftr(@NotNull SPOTParser.ShiftrContext ctx) { }
+
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void enterNtconstant(@NotNull SPOTParser.NtconstantContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 * <p/>
+	 * The default implementation does nothing.
+	 */
+	@Override public void exitNtconstant(@NotNull SPOTParser.NtconstantContext ctx) { }
 
 	/**
 	 * {@inheritDoc}

@@ -9,6 +9,13 @@ import spot.main.ExtractorConfig;
 import spot.main.IStatefulExtractor;
 import spot.parser.SPOTBaseListener;
 import spot.parser.SPOTParser;
+import spot.parser.SPOTParser.BbreakContext;
+import spot.parser.SPOTParser.CcontinueContext;
+import spot.parser.SPOTParser.ExpressionStatementContext;
+import spot.parser.SPOTParser.GgotoContext;
+import spot.parser.SPOTParser.JumpStatementContext;
+import spot.parser.SPOTParser.NtconstantContext;
+import spot.parser.SPOTParser.RreturnContext;
 import spot.util.state.IState;
 import spot.util.state.IStateful;
 
@@ -19,10 +26,11 @@ public abstract class ScopeStateBase extends SPOTBaseListener implements IState 
     private IStatefulExtractor source;
 
     public ScopeStateBase(IStatefulExtractor _source,
+            Scope previousScope,
             ScopeStateBase _previousState) {
         source = _source;
         currentBuilder = new StringBuilder();
-        currentScope = new Scope();
+        currentScope = previousScope;
         previousState = _previousState;
     }
 
@@ -139,113 +147,62 @@ public abstract class ScopeStateBase extends SPOTBaseListener implements IState 
         builder.append("}\n");
     }
 
+    protected void pawnFunctionCall(String funcId, String params)  {
+        pawnFunctionCall(currentBuilder, funcId, params);        
+    }
+    protected static void pawnFunctionCall(StringBuilder builder, String funcId, String params)  {
+        builder.append(funcId);
+        builder.append("(");
+        builder.append(params);
+        builder.append(")");
+    }
+
+    protected void pawnAssign(String varId, String value)  {
+        pawnAssign(currentBuilder, varId, value);        
+    }
+    protected static void pawnAssign(StringBuilder builder, String varId, String value)  {
+        builder.append(varId);
+        builder.append(" = ");
+        builder.append(value);
+    }
+
+    protected void pawnEndStmt()  {
+        pawnEndStmt(currentBuilder);        
+    }
+    protected static void pawnEndStmt(StringBuilder builder)  {
+        builder.append(";\n");
+    }
+
     // LISTENER METHODS
 
     @Override
     public void visitTerminal(TerminalNode node) {
-        // Print line directive asis when they are encountered
-        if (node.getText().startsWith("#")) {
+        String t = node.getText(); 
+        if (t.startsWith("##")) {
+            if (t.startsWith("include", 2)) {
+                //t.split("", );
+            }
+        } else if (t.startsWith("#")) {
             asis(node, "\n");
         }
     }
 
-    @Override
-    public void exitCompilationUnit(SPOTParser.CompilationUnitContext ctx) {
-
-    }
-
-    @Override
-    public void exitExpressionStatement(SPOTParser.ExpressionStatementContext ctx) {}
-
-    @Override
-    public void enterDeclaration(SPOTParser.DeclarationContext ctx) {
-
-    }
-
-    @Override
-    public void exitDeclaration(SPOTParser.DeclarationContext ctx) {
-
-    }
-
-    @Override
-    public void exitDeclarator(SPOTParser.DeclaratorContext ctx) {
-
-    }
-
-    @Override
-    public void enterFunctionDeclarator(SPOTParser.FunctionDeclaratorContext ctx) {
-
-    }
-
-    @Override
-    public void exitFunctionDeclarator(SPOTParser.FunctionDeclaratorContext ctx) {
-
-    }
-
-    @Override
-    public void enterTagSpecifier(SPOTParser.TagSpecifierContext ctx) {}
-
-    @Override
-    public void enterStorageClassSpecifier(SPOTParser.StorageClassSpecifierContext ctx) {}
-
-    @Override
-    public void enterClassSpecifier(SPOTParser.ClassSpecifierContext ctx) {}
-
-    @Override
-    public void exitClassSpecifier(SPOTParser.ClassSpecifierContext ctx) {}
-
-    @Override
-    public void enterClassDeclaration(SPOTParser.ClassDeclarationContext ctx) {}
-
-    @Override
-    public void exitClassDeclaration(SPOTParser.ClassDeclarationContext ctx) {}
-
-    @Override
-    public void enterIdentifierList(SPOTParser.IdentifierListContext ctx) {}
-
-    @Override
-    public void enterFunctionDefinition(SPOTParser.FunctionDefinitionContext ctx) {}
-
-    @Override
-    public void exitFunctionDefinition(SPOTParser.FunctionDefinitionContext ctx) {}
-
-    @Override
-    public void enterParameterDeclaration(SPOTParser.ParameterDeclarationContext ctx) {}
-
-    @Override
-    public void exitParameterDeclaration(SPOTParser.ParameterDeclarationContext ctx) {}
-
-    @Override
-    public void enterDirectDeclarator(SPOTParser.DirectDeclaratorContext ctx) {}
-
-    @Override
-    public void enterCompoundStatement(SPOTParser.CompoundStatementContext ctx) {}
-
-    @Override
-    public void exitCompoundStatement(SPOTParser.CompoundStatementContext ctx) {}
-
-    @Override
-    public void enterJumpStatement(SPOTParser.JumpStatementContext ctx) {}
-
-    @Override
-    public void exitJumpStatement(SPOTParser.JumpStatementContext ctx) {}
-
-    @Override
-    public void enterPrimaryExpression(SPOTParser.PrimaryExpressionContext ctx) {}
-
-    @Override
-    public void enterPostfixExpressionDot(SPOTParser.PostfixExpressionDotContext ctx) {}
-
-    @Override
-    public void enterPostfixExpression(SPOTParser.PostfixExpressionContext ctx) {}
-
-    @Override
-    public void exitPostfixExpression(SPOTParser.PostfixExpressionContext ctx) {}
-
-    @Override
-    public void enterPostfixExpressionArgs(SPOTParser.PostfixExpressionArgsContext ctx) {}
-
     // pseudo terminals
+
+    @Override
+    public void exitJumpStatement(JumpStatementContext ctx) {
+        pawnLine();
+    }
+
+    @Override
+    public void exitExpressionStatement(ExpressionStatementContext ctx) {
+        pawnLine();
+    }
+
+    @Override
+    public void enterNtconstant(NtconstantContext ctx) {
+        asis(ctx);
+    }
 
     @Override
     public void enterTypeAccessQualifier(SPOTParser.TypeAccessQualifierContext ctx) {
@@ -374,6 +331,26 @@ public abstract class ScopeStateBase extends SPOTBaseListener implements IState 
 
     @Override
     public void enterAssignmentOperator(SPOTParser.AssignmentOperatorContext ctx) {
+        asis(ctx);
+    }
+
+    @Override
+    public void enterRreturn(RreturnContext ctx) {
+        asis(ctx);
+    }
+
+    @Override
+    public void enterGgoto(GgotoContext ctx) {
+        asis(ctx);
+    }
+
+    @Override
+    public void enterCcontinue(CcontinueContext ctx) {
+        asis(ctx);
+    }
+
+    @Override
+    public void enterBbreak(BbreakContext ctx) {
         asis(ctx);
     }
 }

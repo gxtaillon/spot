@@ -110,6 +110,17 @@ public interface SPOTListener extends ParseTreeListener {
 	void exitTypeQualifierList(@NotNull SPOTParser.TypeQualifierListContext ctx);
 
 	/**
+	 * Enter a parse tree produced by {@link SPOTParser#rreturn}.
+	 * @param ctx the parse tree
+	 */
+	void enterRreturn(@NotNull SPOTParser.RreturnContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link SPOTParser#rreturn}.
+	 * @param ctx the parse tree
+	 */
+	void exitRreturn(@NotNull SPOTParser.RreturnContext ctx);
+
+	/**
 	 * Enter a parse tree produced by {@link SPOTParser#parameterList}.
 	 * @param ctx the parse tree
 	 */
@@ -374,6 +385,17 @@ public interface SPOTListener extends ParseTreeListener {
 	void exitStaticAssertDeclaration(@NotNull SPOTParser.StaticAssertDeclarationContext ctx);
 
 	/**
+	 * Enter a parse tree produced by {@link SPOTParser#ggoto}.
+	 * @param ctx the parse tree
+	 */
+	void enterGgoto(@NotNull SPOTParser.GgotoContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link SPOTParser#ggoto}.
+	 * @param ctx the parse tree
+	 */
+	void exitGgoto(@NotNull SPOTParser.GgotoContext ctx);
+
+	/**
 	 * Enter a parse tree produced by {@link SPOTParser#directDeclarator}.
 	 * @param ctx the parse tree
 	 */
@@ -429,6 +451,17 @@ public interface SPOTListener extends ParseTreeListener {
 	void exitEqeq(@NotNull SPOTParser.EqeqContext ctx);
 
 	/**
+	 * Enter a parse tree produced by {@link SPOTParser#ccontinue}.
+	 * @param ctx the parse tree
+	 */
+	void enterCcontinue(@NotNull SPOTParser.CcontinueContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link SPOTParser#ccontinue}.
+	 * @param ctx the parse tree
+	 */
+	void exitCcontinue(@NotNull SPOTParser.CcontinueContext ctx);
+
+	/**
 	 * Enter a parse tree produced by {@link SPOTParser#gccDeclaratorExtension}.
 	 * @param ctx the parse tree
 	 */
@@ -471,6 +504,17 @@ public interface SPOTListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitEnumeratorList(@NotNull SPOTParser.EnumeratorListContext ctx);
+
+	/**
+	 * Enter a parse tree produced by {@link SPOTParser#bbreak}.
+	 * @param ctx the parse tree
+	 */
+	void enterBbreak(@NotNull SPOTParser.BbreakContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link SPOTParser#bbreak}.
+	 * @param ctx the parse tree
+	 */
+	void exitBbreak(@NotNull SPOTParser.BbreakContext ctx);
 
 	/**
 	 * Enter a parse tree produced by {@link SPOTParser#compoundStatement}.
@@ -660,6 +704,17 @@ public interface SPOTListener extends ParseTreeListener {
 	void exitExternalDeclaration(@NotNull SPOTParser.ExternalDeclarationContext ctx);
 
 	/**
+	 * Enter a parse tree produced by {@link SPOTParser#initializer}.
+	 * @param ctx the parse tree
+	 */
+	void enterInitializer(@NotNull SPOTParser.InitializerContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link SPOTParser#initializer}.
+	 * @param ctx the parse tree
+	 */
+	void exitInitializer(@NotNull SPOTParser.InitializerContext ctx);
+
+	/**
 	 * Enter a parse tree produced by {@link SPOTParser#initDeclaratorList}.
 	 * @param ctx the parse tree
 	 */
@@ -680,17 +735,6 @@ public interface SPOTListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitEq(@NotNull SPOTParser.EqContext ctx);
-
-	/**
-	 * Enter a parse tree produced by {@link SPOTParser#initializer}.
-	 * @param ctx the parse tree
-	 */
-	void enterInitializer(@NotNull SPOTParser.InitializerContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link SPOTParser#initializer}.
-	 * @param ctx the parse tree
-	 */
-	void exitInitializer(@NotNull SPOTParser.InitializerContext ctx);
 
 	/**
 	 * Enter a parse tree produced by {@link SPOTParser#expression}.
@@ -900,6 +944,17 @@ public interface SPOTListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitShiftr(@NotNull SPOTParser.ShiftrContext ctx);
+
+	/**
+	 * Enter a parse tree produced by {@link SPOTParser#ntconstant}.
+	 * @param ctx the parse tree
+	 */
+	void enterNtconstant(@NotNull SPOTParser.NtconstantContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link SPOTParser#ntconstant}.
+	 * @param ctx the parse tree
+	 */
+	void exitNtconstant(@NotNull SPOTParser.NtconstantContext ctx);
 
 	/**
 	 * Enter a parse tree produced by {@link SPOTParser#additiveExpression}.

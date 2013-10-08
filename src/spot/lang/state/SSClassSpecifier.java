@@ -1,7 +1,5 @@
 package spot.lang.state;
 
-import java.util.List;
-
 import spot.lang.API;
 import spot.lang.EVisibility;
 import spot.lang.Function;
@@ -9,6 +7,8 @@ import spot.lang.Scope;
 import spot.lang.TagClass;
 import spot.main.IStatefulExtractor;
 import spot.parser.SPOTParser;
+import spot.parser.SPOTParser.ClassInheritanceSpecifierContext;
+import spot.parser.SPOTParser.ClassSpecifierContext;
 
 public class SSClassSpecifier extends ScopeStateBase {
     public static final String DEFAULT_CTOR_ID = "ctor";
@@ -20,10 +20,12 @@ public class SSClassSpecifier extends ScopeStateBase {
     public SSClassSpecifier(IStatefulExtractor _source,
             Scope previousScope,
             ScopeStateBase _previousState,
-            String classId) {
-        super(_source, _previousState);
+            ClassSpecifierContext ctx) {
+        super(_source, previousScope, _previousState);
         headerBuilder = new StringBuilder();
         previousScope.copyTo(currentScope);
+        
+        String classId = ctx.Identifier().toString();
 
         String up = getSourceConfig().getUniversalPrefix();
         currentClass = new TagClass(up + TagClass.getPawnEnumId(classId));
@@ -36,7 +38,8 @@ public class SSClassSpecifier extends ScopeStateBase {
         currentClass.pSize = currentClass.identifier + up + "Size";
         // Class ID
         currentClass.pId = currentClass.identifier + up + "Id";
-        pawnDefine(headerBuilder, currentClass.pId, Integer.toString(currentClass.getUId()));
+        pawnDefine(headerBuilder, currentClass.pId,
+                Integer.toString(currentClass.getUId()));
 
         currentClass.cleanIdentifier = classId;
     }
@@ -48,7 +51,7 @@ public class SSClassSpecifier extends ScopeStateBase {
         builder.append("if (");
         builder.append(DEFAULT_THIS_ID);
         builder.append(" == null) {\n");
-        
+
         // Call to NewC
         builder.append(API.NewC);
         builder.append("(");
@@ -64,7 +67,7 @@ public class SSClassSpecifier extends ScopeStateBase {
         builder.append(") = ");
         builder.append(idMacro);
         builder.append(";\n");
-        
+
         // Close check
         builder.append("}\n");
 
@@ -84,7 +87,9 @@ public class SSClassSpecifier extends ScopeStateBase {
             String sizeMacro,
             String idMacro) {
         builder.append(ctorId);
-        builder.append("() {\n");
+        builder.append("(");
+        builder.append(DEFAULT_THIS_ID);
+        builder.append(") {\n");
 
         pawnUpperCtor(builder, sizeMacro, idMacro);
         pawnLowerCtor(builder);
@@ -120,6 +125,14 @@ public class SSClassSpecifier extends ScopeStateBase {
         pawnLowerDtor(builder, sizeMacro);
 
         builder.append("}\n");
+    }
+
+    @Override
+    public void enterClassInheritanceSpecifier(ClassInheritanceSpecifierContext ctx) {
+        getSourceExtractor().setState(
+                new SSClassSpecifier_InheritanceDeclarationList(
+                        getSourceExtractor(), currentScope, this,
+                        currentClass));
     }
 
     @Override
@@ -161,7 +174,7 @@ public class SSClassSpecifier extends ScopeStateBase {
         // Mark the end of the class
         pawnCommentLine("END CLASS " + currentClass.identifier);
         pawnLine();
-        
+
         headerBuilder.append(currentBuilder);
         currentBuilder = headerBuilder;
 
@@ -178,13 +191,15 @@ public class SSClassSpecifier extends ScopeStateBase {
         if (ctx.identifierList() != null) {
             // Parsing variables
             getSourceExtractor().setState(
-                    new SSClassSpecifier_SSHIdentifierList(
-                            getSourceExtractor(), this, currentClass, vis));
+                    new SSClassSpecifier_VariableDeclarationList(
+                            getSourceExtractor(), currentScope, this,
+                            currentClass, vis));
         } else if (ctx.functionDefinition() != null) {
             // Parsing a function
             getSourceExtractor().setState(
-                    new SSClassSpecifier_SSHFunctionDefinition(
-                            getSourceExtractor(), this, currentClass, vis));
+                    new SSClassSpecifier_FunctionDefinition(
+                            getSourceExtractor(), currentScope, this,
+                            currentClass, vis));
         }
     }
 }
