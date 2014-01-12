@@ -1,0 +1,51 @@
+class A {
+    a;
+    __public f(this, x) { return this.a + x; }
+};
+
+class B {
+    b;
+    public f(this, x) { return this.b * x; }
+};
+
+class A2 : A {
+    c;
+    __public public ctor(this) {
+        this.a = 1330;
+        this.c = 3;
+    }
+    dtor(this) {
+        this.a = 0;
+        this.c = 0;
+    }
+    stock @g(this, x) {
+        return this.c % (
+            this.f(x) +
+            this.f(x)
+            );
+    }
+};
+
+public OnPluginStart() {
+    new A:myA = A(null);
+    myA.a = 10;
+    new Bool:shouldBe12 = myA.f(2) == 12;
+    PrintToServer("myA.f(2) == 12 => %b", shouldBe12);
+    myA.dtor();
+    
+    new B:myB = B(null);
+    myB.b = 5;
+    new Bool:shouldBe10 = myB.f(2) == 10;
+    PrintToServer("myB.f(2) == 10 => %b", shouldBe10);
+    myB.dtor();
+    
+    new AB:myAB = AB(null);
+    new Bool:shouldBe1 = myAB.g(2) == 1;
+    PrintToServer("myAB.g(2) == 1 => %b", shouldBe1);
+    
+    myA = myAB;
+    new Bool:shouldBe1337 = myA.f(7) == 1337;
+    PrintToServer("myA = myAB", shouldBe1337);
+    PrintToServer("myA.f(7) == 1337 => %b", shouldBe1337);
+    myAB.dtor();
+}
