@@ -1,4 +1,4 @@
-[DEV BRANCH:states] SourcePawn Object Translator 
+SourcePawn Object Translator 
 ====
 
 The current developpement branch is ```states``` (https://github.com/MomemtumMori/spot/tree/states).
