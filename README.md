@@ -1,7 +1,7 @@
 SourcePawn Object Translator 
 ====
 
-The current developpement branch is ```states``` (https://github.com/MomemtumMori/spot/tree/states).
+The current developpement branch is ```hs-impl```.
 
 Quick info
 ----------
