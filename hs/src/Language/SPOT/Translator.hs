@@ -77,7 +77,12 @@ mainTranslator = do
     when (optFileOut opts == Nothing) $ do
         putStrLn "Output is missing"
         exitWith ExitSuccess
-    fromFile (fromJust $ optFileIn opts) (fromJust $ optFileOut opts)
+    let parsed = fromFile translUnit (fromJust $ optFileIn opts) 
+    writeFile (fromJust $ optFileOut opts) parsed
 
-fromFile :: FilePath -> FilePath -> IO ()
-fromFile fIn fOut = readFile fIn >>= writeFile fOut
+fromFile :: Parser a -> FilePath -> IO ()
+fromFile p fIn = do
+    cs <- readFile fIn
+    runParser p () fIn cs
+    
+

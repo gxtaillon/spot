@@ -1,5 +1,5 @@
 {-|
-Module      : Language.SPOT.Data
+Module      : Language.SPOT.Syntax
 Description : 
 Copyright   : (c) Momemtum Mori, 2014
 License     : GPL-3
@@ -10,8 +10,8 @@ Portability : ghc
 0 > 1
 -}
 
-module Language.SPOT.Data 
-    ( module Language.SPOT.Data.Ident
+module Language.SPOT.Syntax 
+    ( module Language.SPOT.Syntax.AST
     ) where
     
-import Language.SPOT.Data.Ident
+import Language.SPOT.Syntax.AST

@@ -12,6 +12,8 @@ Portability : ghc
 
 module Language.SPOT 
     ( module Language.SPOT.Data
+    , module Language.SPOT.Syntax
     ) where
     
 import Language.SPOT.Data
+import Language.SPOT.Syntax
