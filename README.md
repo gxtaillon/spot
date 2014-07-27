@@ -22,6 +22,13 @@ Interpreter
 -----------
 Using the parser and compiler as a base, a simple interpreter could be created. This would allow scripts to be tested without the burden of running them through a Source server. Calls to native functions would need to be ignored for simplicity's sake but, stubs could be written to show proper execution. 
 
+Main Features (for now)
+-----------------------
+* Backwards compatible with SourcePawn 1.6 and earlier
+* `Class`es & * `Interface`s
+* Inheritance & Polyorphism
+
 Notes
 -----
-<span name="note1">1.</span> SPO programs are bundled and compiled with their own [static memory manager](test/spo/core/memory.sp). This means that their coresponding SMX files will be sensibly larger than one would expect.
+1. <span name="note1"></span> SPO programs are bundled and compiled with their own [static memory manager](test/spo/core/memory.sp). This means that their coresponding SMX files will be sensibly larger than one would expect.
+
