@@ -1,6 +1,10 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RankNTypes #-}
+module Language.SPO.Parser 
+    ( whileParser
+    ) where
+
 import Control.Monad
-import Data.Int
+import Data.Functor.Identity
 import qualified Data.Text as T
 import Text.Parsec
 import Text.Parsec.Text
@@ -8,48 +12,9 @@ import Text.Parsec.Expr
 import Text.Parsec.Language
 import qualified Text.Parsec.Token as Token
 
+import Language.SPO.Types
 
--- Data structures
-data ExprBoolean = 
-      ExprBool Bool
-    | ExprNot ExprBoolean
-    | ExprBinBool OpBinBoolean ExprBoolean ExprBoolean
-    | ExprBinRel OpBinRelational ExprArithmetic ExprArithmetic
-      deriving (Show)
-
-data OpBinBoolean = 
-      OpAnd 
-    | OpOr 
-      deriving (Show)
-
-data OpBinRelational = 
-      OpGT 
-    | OpLT 
-      deriving (Show)
-
-data ExprArithmetic = 
-      ExprVar T.Text
-    | ExprInt Integer
-    | ExprNeg ExprArithmetic
-    | ExprBinAr OpBinArithemic ExprArithmetic ExprArithmetic
-      deriving (Show)
-
-data OpBinArithemic = 
-      OpAdd 
-    | OpSub 
-    | OpMul 
-    | OpDiv 
-      deriving (Show)
-
-data Statement = 
-      StmtSeq [Statement]
-    | StmtAss T.Text ExprArithmetic
-    | StmtIf ExprBoolean Statement Statement
-    | StmtWhile ExprBoolean Statement
-      deriving (Show)
-
--- Lexer
-
+langDef :: forall u. GenLanguageDef T.Text u Identity
 langDef = Token.LanguageDef
     { Token.commentStart    = "/*"
     , Token.commentEnd      = "*/"
@@ -73,31 +38,45 @@ langDef = Token.LanguageDef
     , Token.caseSensitive   = True
     }
 
+lexer :: forall u. Token.GenTokenParser T.Text u Identity
 lexer = Token.makeTokenParser langDef
 
+identifier :: Parser T.Text
 identifier = Token.identifier lexer >>= return . T.pack
+
+reserved :: String -> Parser ()
 reserved   = Token.reserved   lexer
+
+reservedOp :: String -> Parser ()
 reservedOp = Token.reservedOp lexer
+
+integer :: Parser Integer
 integer    = Token.integer    lexer
+
+semicolon ::  Parser String
 semicolon  = Token.semi       lexer
+
+whiteSpace :: Parser ()
 whiteSpace = Token.whiteSpace lexer
 
+parens, braces {-, angles, brackets -} :: forall a. Parser a -> Parser a
 parens     = Token.parens     lexer -- ()
 braces     = Token.braces     lexer -- {}
-angles     = Token.angles     lexer -- <>
-brackets   = Token.brackets   lexer -- []
+--angles     = Token.angles     lexer -- <>
+--brackets   = Token.brackets   lexer -- []
 
 
--- Parser
+-- Main Parser
 
 whileParser :: Parser Statement
 whileParser = whiteSpace >> statement
 
 statement :: Parser Statement
 statement = parens statement
-        <|> sequenceOfStatements
+        <|> statements
 
-sequenceOfStatements = do
+statements :: Parser Statement
+statements = do
     list <- sepBy1 statement' semicolon
     return $ if length list == 1 then head list else StmtSeq list
 
@@ -127,7 +106,7 @@ assignStmt = do
     var  <- identifier
     reservedOp "="
     expr <- exprArithmetic
-    semicolon
+    _ <- semicolon
     return $ StmtAss var expr
 
 exprBoolean :: Parser ExprBoolean
@@ -136,11 +115,13 @@ exprBoolean = buildExpressionParser opBoolean termBoolean
 exprArithmetic :: Parser ExprArithmetic
 exprArithmetic = buildExpressionParser opArithmetic termArithmetic
 
+opBoolean :: OperatorTable T.Text () Identity ExprBoolean
 opBoolean = [ [Prefix (reservedOp "!"  >> return (ExprNot          ))          ]
             , [Infix  (reservedOp "&&" >> return (ExprBinBool OpAnd)) AssocLeft]
             , [Infix  (reservedOp "||" >> return (ExprBinBool OpOr )) AssocLeft]
             ]
 
+opArithmetic :: OperatorTable T.Text () Identity ExprArithmetic
 opArithmetic = [ [Prefix (reservedOp "-" >> return (ExprNeg        ))          ]
                , [Infix  (reservedOp "*" >> return (ExprBinAr OpMul)) AssocLeft]
                , [Infix  (reservedOp "/" >> return (ExprBinAr OpDiv)) AssocLeft]
@@ -169,34 +150,3 @@ exprRelational = do
 relation :: Parser OpBinRelational
 relation = (reservedOp ">" >> return OpGT)
        <|> (reservedOp "<" >> return OpLT)
-
--- Writer
-
-
-
--- Utils
-
-parseString :: String -> Statement
-parseString str = case parse whileParser "" $ T.pack str of
-    Left e  -> error $ show e
-    Right r -> r
-
-parseFile :: String -> IO Statement
-parseFile file = do
-    program <- readFile file
-    case parse whileParser "" $ T.pack program of
-        Left e  -> print e >> fail "parse error"
-        Right r -> return r
-        
-
-
-
-
-
-
-
-
-
-
-
-
