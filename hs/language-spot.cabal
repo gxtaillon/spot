@@ -16,6 +16,10 @@ build-type:          Simple
 cabal-version:       >=1.8
 stability:           unstable
 
+flag debug
+    description:     Enable debug configuration
+    default:         False
+
 library
     extensions:      OverloadedStrings
     hs-Source-Dirs:  src/lib
@@ -25,7 +29,10 @@ library
                      Language.SPO.Translators
                      Language.SPO.Translators.Translator
                      Language.SPO.Translators.SourcePawn
-    ghc-options:     -Wall -fforce-recomp
+    if flag(debug)
+        ghc-options: -Wall -fforce-recomp
+    else
+        ghc-options: -Wall
     build-depends:   base     >= 4.6  && < 5
                    , parsec
                    , text

@@ -69,7 +69,11 @@ braces     = Token.braces     lexer -- {}
 -- Main Parser
 
 whileParser :: Parser Statement
-whileParser = whiteSpace >> statement
+whileParser = do
+    whiteSpace
+    stmt <- statement
+    eof
+    return stmt
 
 statement :: Parser Statement
 statement = parens statement
@@ -77,28 +81,43 @@ statement = parens statement
 
 statements :: Parser Statement
 statements = do
-    list <- sepBy1 statement' semicolon
+    list <- sepBy1 statement' whiteSpace
     return $ if length list == 1 then head list else StmtSeq list
 
 statement' :: Parser Statement
-statement' = ifStmt
+statement' = try ifElseStmt
+         <|> ifStmt
          <|> whileStmt
          <|> assignStmt
 
-ifStmt :: Parser Statement
-ifStmt = do 
+bracedStmt :: Parser Statement
+bracedStmt = (try $ statement') 
+         <|> braces statement
+
+ifStmt' :: Parser (ExprBoolean, Statement)
+ifStmt' = do 
     reserved "if"
     cond  <- parens exprBoolean
-    stmt1 <- braces statement
-    reserved "else"
-    stmt2 <- braces statement
-    return $ StmtIf cond stmt1 stmt2
+    stmt <- bracedStmt
+    return (cond,stmt)
 
+ifStmt :: Parser Statement
+ifStmt = do 
+    (cond, stmt) <- ifStmt'
+    return $ StmtIf cond stmt
+
+ifElseStmt :: Parser Statement
+ifElseStmt = do 
+    (cond, stmt1) <- ifStmt'
+    reserved "else"
+    stmt2 <- bracedStmt
+    return $ StmtIfElse cond stmt1 stmt2
+    
 whileStmt :: Parser Statement
 whileStmt = do 
     reserved "while"
     cond <- parens exprBoolean
-    stmt <- braces statement
+    stmt <- bracedStmt
     return $ StmtWhile cond stmt
 
 assignStmt :: Parser Statement

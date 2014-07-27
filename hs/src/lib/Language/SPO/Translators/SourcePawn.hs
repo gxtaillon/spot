@@ -48,10 +48,10 @@ stmt :: Statement -> T.Text
 stmt (StmtSeq [])  = endAssignment
 stmt (StmtSeq ss)  = T.concat $ map stmt ss
 stmt (StmtAss n e) = n ++ space ++ exprArithmetic e ++ endAssignment
-stmt (StmtIf c s1 s2) = _if ++ space ++ parens (exprBoolean c) 
-                            ++ space ++ braces (line ++ stmt s1)
-                            ++ space ++ braces (line ++ stmt s2)
-                            ++ line
+stmt (StmtIfElse c s1 s2) = _if ++ space ++ parens (exprBoolean c) 
+                                ++ space ++ braces (line ++ stmt s1)
+                                ++ space ++ braces (line ++ stmt s2)
+                                ++ line
 stmt (StmtWhile c s)  = _while ++ space ++ parens (exprBoolean c) ++ space
                                ++ braces (line ++ stmt s)
                                ++ line

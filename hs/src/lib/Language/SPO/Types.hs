@@ -43,6 +43,7 @@ data OpBinArithemic =
 data Statement = 
       StmtSeq [Statement]
     | StmtAss Text ExprArithmetic
-    | StmtIf ExprBoolean Statement Statement
+    | StmtIf ExprBoolean Statement
+    | StmtIfElse ExprBoolean Statement Statement
     | StmtWhile ExprBoolean Statement
       deriving (Show)
