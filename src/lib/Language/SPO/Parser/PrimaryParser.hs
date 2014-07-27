@@ -31,6 +31,8 @@ langDef = Token.LanguageDef
                               ,     "forward"
                               , "private", "protected"
                               , "new", "decl"
+                              , "return"
+                              , "class", "interface"
                               ]
     , Token.reservedOpNames = [ "+", "-", "*", "/", "="
                               , "<", ">"
@@ -45,26 +47,29 @@ lexer = Token.makeTokenParser langDef
 identifier :: Parser T.Text
 identifier = Token.identifier lexer >>= return . T.pack
 
-reserved :: String -> Parser ()
+reserved   :: String -> Parser ()
 reserved   = Token.reserved   lexer
 
 reservedOp :: String -> Parser ()
 reservedOp = Token.reservedOp lexer
 
-integer :: Parser Integer
+integer    :: Parser Integer
 integer    = Token.integer    lexer
 
-semicolon ::  Parser String
+semicolon  ::  Parser String
 semicolon  = Token.semi       lexer
+
+comma      :: Parser String
+comma      = Token.comma      lexer
 
 whiteSpace :: Parser ()
 whiteSpace = Token.whiteSpace lexer
 
-parens, braces {-, angles, brackets -} :: forall a. Parser a -> Parser a
+parens, braces ,{- angles,  -} brackets :: forall a. Parser a -> Parser a
 parens     = Token.parens     lexer -- ()
 braces     = Token.braces     lexer -- {}
 --angles     = Token.angles     lexer -- <>
---brackets   = Token.brackets   lexer -- []
+brackets   = Token.brackets   lexer -- []
 
 
 -- Main Parser
@@ -159,10 +164,9 @@ newStmt = do
     mtag <- tagDeclaration
     var <- identifier
     marr <- arrayDeclaration
-    reservedOp "="
-    expr <- exprAssignment
+    mexpr <- optionMaybe (try (reservedOp "=" >> exprAssignment))
     _ <- semicolon
-    return $ StmtNew ms mtag var marr expr
+    return $ StmtNew ms mtag var marr mexpr
 
 tagDeclaration :: Parser TagDeclaration
 tagDeclaration = optionMaybe $ try $ do
@@ -180,6 +184,7 @@ arrayDeclaration = optionMaybe $ try $ do
 exprAssignment :: Parser ExprAssignment
 exprAssignment = try (liftM ExprAssBool exprBoolean)
              <|> (liftM ExprAssAr exprArithmetic)
+             <|> (liftM ExprAssArrayInit (braces (sepBy exprArithmetic comma)))
 
 variableModifiers :: Parser VariableModifiers
 variableModifiers = many $ choice [
@@ -200,7 +205,8 @@ opBoolean = [ [Prefix (reservedOp "!"  >> return (ExprNot          ))          
             ]
 
 opArithmetic :: OperatorTable T.Text () Identity ExprArithmetic
-opArithmetic = [ [Prefix (reservedOp "-" >> return (ExprNeg        ))          ]
+opArithmetic = [ [Postfix (brackets exprArithmetic >>= return . ExprIndex)     ]
+               , [Prefix (reservedOp "-" >> return (ExprNeg        ))          ]
                , [Infix  (reservedOp "*" >> return (ExprBinAr OpMul)) AssocLeft]
                , [Infix  (reservedOp "/" >> return (ExprBinAr OpDiv)) AssocLeft]
                , [Infix  (reservedOp "+" >> return (ExprBinAr OpAdd)) AssocLeft]

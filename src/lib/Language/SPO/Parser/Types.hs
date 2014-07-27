@@ -13,7 +13,6 @@ module Language.SPO.Parser.Types
     ) where
 
 import Data.Text
-import Data.These
 
 data ExprBoolean = 
       ExprBool Bool
@@ -37,6 +36,7 @@ data ExprArithmetic =
     | ExprInt Integer
     | ExprNeg ExprArithmetic
     | ExprBinAr OpBinArithemic ExprArithmetic ExprArithmetic
+    | ExprIndex ExprArithmetic ExprArithmetic
       deriving (Show)
 
 data OpBinArithemic = 
@@ -49,6 +49,7 @@ data OpBinArithemic =
 data ExprAssignment =
       ExprAssAr ExprArithmetic
     | ExprAssBool ExprBoolean
+    | ExprAssArrayInit [ExprArithmetic]
       deriving (Show)
 
 type TagDeclaration = Maybe Text
@@ -63,7 +64,7 @@ type VariableModifiers = [OpModifier]
 
 data Statement = 
       StmtSeq [Statement]
-    | StmtNew VariableModifiers TagDeclaration Text ArrayDeclaration ExprAssignment
+    | StmtNew VariableModifiers TagDeclaration Text ArrayDeclaration (Maybe ExprAssignment)
     | StmtDecl VariableModifiers TagDeclaration Text ArrayDeclaration
     | StmtAss Text ArrayDeclaration ExprAssignment
     | StmtIf ExprBoolean Statement
