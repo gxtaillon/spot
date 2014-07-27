@@ -1,100 +1,21 @@
-SourcePawn Object Translator 
+SourcePawn Object 
 ====
 
-The current developpement branch is ```hs-impl```.
+This is the e current developpement branch.
 
 Quick info
 ----------
 SPOT statically adds object oriented features to the SourcePawn scripting language. 
 It aims to be backward compatible with traditionnal SourcePawn scripts and does not rely on native calls. 
-This means once compiled, an SPO (SourcePawn Object) script has very little overhead and can be run with nothing more than a SourceMod installation. No additionnal plugins required.
+This means once compiled, an SPO (SourcePawn Object) script has very little overhead and can be run with nothing more than a SourceMod installation. No plugins required<sup>[[1]](#note1)</sup>.
 
-It is in a very early state. Expect some bugs.
+Implementation (3'ish steps compiler)
+--------------
+The Parsec based `PrimaryParser` generates a detailed tree of statements and expressions from an input program. This is the syntaxic analysis.
+This tree is then given to the compiler (Not implemented yet) which will explore and verify the integrity of the tree. For instance, conflict types, undefined variables, etc. This is the first semantic analysis.
+There could be an added optimizer at this stage but it will not be included in the first release.
+The final step, translation, will take the compiler or optimizer output tree and translate its nodes into human readable code. It will be possible to have multiple translators. The most important one here will be the one for Source*Pawn* 1.6 and ealier.
 
-Here is an exemple of the new syntax:
-<table>
-<tr>
-<th>SourcePawn Object</th>
-</tr>
-<tr>
-<td>
-<pre>
-class Demo {
-    __public myValue;
-    __public Bool:truth1, truth2;
-
-    __public public getMyValue(Demo:this) { 
-        return this.myValue; 
-    }
-    
-    // Since public is already used by pawn, __public, __private and __protected 
-    //  are used to indicated the members visibility
-    // The following function will then be a public member and public function 
-    //  of the script. It could also be __public stock, __protected native, etc.
-    __public public setTruth1(Demo:this, _truth1) { 
-        return this.truth1 = _truth1; 
-    }
-};
-
-testObject() {
-    // Instanciation of class Demo
-    new Demo:myDemo = Demo();
-    
-    // Writing to a member
-    myDemo.myValue = 123;
-    
-    // Reading from a member 
-    new aValue = myDemo.myValue;
-    
-    // Calling a member and retrieving its return value
-    new shouldBeTrue = aValue == myDemo.getMyValue();
-    
-    // Calling with parameters
-    myDemo.setTruth1(shouldBeTrue);
-    
-    // Releasing the instance's resources (very important!)
-    myDemo.dtor();
-    // When instanciating a class, a block of memory is allocated to 
-    //  hold its data and a "pointer" is returned to indicate where to find it.
-    //  The pointer's data has to be freed.
-}
-</pre>
-</td>
-</tr>
-</table>
-
-More info
----------
-In its current state, SPOT is a parser/translator, has no concept of closure or scope and will only read an input an modify it on the fly to what it thinks should be the output. 
-
-It is possible that some characters ( ``` ,;:.()[]{} ``` etc. ), or entire expressions, will disappear during the translation. If this happens to you or if you find any other bug please file an issue.
-
-It relies heavily on the ANTLR4 parser generator and on a modified version of the C.g4 grammar from Sam Harwell. The orginal version can be found at https://github.com/antlr/grammars-v4/blob/master/c/C.g4
-
-Usage
+Notes
 -----
-Start a java instance using the ExtractPawnTool class and give it the path of the source script as first parameter. The translation will be printed to the standard output.
-
-Implemented features
---------------------
-* Class definition syntax :: class < ID > [ : < CLASSID > [ , < CLASSID > ] ] { < VAR | FUNC >* };
-* Class declaration syntax :: < new | decl > < CLASSID >:< ID >;
-* Class variable call syntax :: < ID >.< CLASSMEMBERID >
-* Class function call syntax :: < ID >.< CLASSMEMBERID >(< PARAM >*)
-* Non-native dependant dynamic memory allocation (Pointer-like features within the script)
-
-Planned features
-----------------
-* Class inheritance, multiple **
-* Class up/downcasting
-* Class polymorphism **
-* Interfaces
-* Interpretation of scopes
-* Classes as class variables ** and operator ```->``` for easy usage
-
-** There is a working prototype written in pawn for this feature, but it must be added to the translator.
-
-Other features which could be fun to implement
-----------------------------------------------
-* Templates
-* Lambdas
+<span name="note1">1.</span> Although SPO programs will be able to be compiled with the provided memory manager, it will be possible to tweak it or implement your own altogether!
