@@ -16,7 +16,7 @@ From Object to Pawn
 2. * This tree is then given to the compiler (Not implemented yet) which will explore and verify the integrity of the tree. For instance, conflicting types, undefined variables, etc. This is the first of two semantic analyses.
   * There might be an added optimizer at this stage but it will not be included in the first release. 
 
-3. The final step, translation, will take the compiler or optimizer output tree and translate its nodes into human readable code. It will be possible to have multiple translators. The first the be implemented will be the one for SourcePawn 1.6 and ealier.
+3. The final step, translation, will take the compiler or optimizer output tree and translate its nodes into human readable code. It will be possible to have multiple translators. The first to be implemented will be the one for SourcePawn 1.6 and ealier.
 
 Interpreter
 -----------
