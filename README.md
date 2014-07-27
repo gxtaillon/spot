@@ -30,5 +30,5 @@ Main Features (for now)
 
 Notes
 -----
-1. <span name="note1">SPO</span> programs are bundled and compiled with their own [static memory manager](test/spo/core/memory.sp). This means that their coresponding SMX files will be sensibly larger than one would expect.
+1. <a name="note1"></a>SPO programs are bundled and compiled with their own [static memory manager](test/spo/core/memory.sp). This means that their coresponding SMX files will be sensibly larger than one would expect.
 
