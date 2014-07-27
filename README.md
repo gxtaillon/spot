@@ -5,17 +5,23 @@ This is the current developpement branch.
 
 Quick info
 ----------
-SPOT statically adds object oriented features to the SourcePawn scripting language. 
+The SPO language and its tools statically add object oriented features to the SourcePawn scripting language. 
 It aims to be backward compatible with traditionnal SourcePawn scripts and does not rely on native calls. 
-This means once compiled, an SPO (SourcePawn Object) script has very little overhead and can be run with nothing more than a SourceMod installation. No plugins required<sup>[[1]](#note1)</sup>.
+This means once compiled, an SPO script has very little overhead<sup>[[1]](#note1)</sup> and can be run with nothing more than a SourceMod installation. No plugins required.
 
-Implementation (3'ish steps compiler)
+From Object to Pawn
 --------------
-The Parsec based `PrimaryParser` generates a detailed tree of statements and expressions from an input program. This is the syntaxic analysis.
-This tree is then given to the compiler (Not implemented yet) which will explore and verify the integrity of the tree. For instance, conflict types, undefined variables, etc. This is the first semantic analysis.
-There could be an added optimizer at this stage but it will not be included in the first release.
-The final step, translation, will take the compiler or optimizer output tree and translate its nodes into human readable code. It will be possible to have multiple translators. The most important one here will be the one for Source*Pawn* 1.6 and ealier.
+1. The [Parsec](http://legacy.cs.uu.nl/daan/parsec.html) based `PrimaryParser` generates a detailed tree of statements and expressions from an input program. This is the syntaxic analysis.
+
+2. * This tree is then given to the compiler (Not implemented yet) which will explore and verify the integrity of the tree. For instance, conflicting types, undefined variables, etc. This is the first of two semantic analyses.
+  * There might be an added optimizer at this stage but it will not be included in the first release. 
+
+3. The final step, translation, will take the compiler or optimizer output tree and translate its nodes into human readable code. It will be possible to have multiple translators. The first the be implemented will be the one for SourcePawn 1.6 and ealier.
+
+Interpreter
+-----------
+Using the parser and compiler as a base, a simple interpreter could be created. This would allow scripts to be tested without the burden of running them through a Source server. Calls to native functions would need to be ignored for simplicity's sake but, stubs could be written to show proper execution. 
 
 Notes
 -----
-<span name="note1">1.</span> Although SPO programs will be able to be compiled with the provided memory manager, it will be possible to tweak it or implement your own altogether!
+<span name="note1">1.</span> SPO programs are bundled and compiled with their own [static memory manager](test/spo/core/memory.sp). This means that their coresponding SMX files will be sensibly larger than one would expect.
