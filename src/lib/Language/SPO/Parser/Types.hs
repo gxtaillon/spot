@@ -5,10 +5,15 @@ module Language.SPO.Parser.Types
     , ExprArithmetic (..)
     , OpBinArithemic (..)
     , ExprAssignment (..)
+    , TagDeclaration
+    , ArrayDeclaration
+    , VariableModifiers
+    , OpModifier (..)
     , Statement (..)
     ) where
 
 import Data.Text
+import Data.These
 
 data ExprBoolean = 
       ExprBool Bool
@@ -46,9 +51,21 @@ data ExprAssignment =
     | ExprAssBool ExprBoolean
       deriving (Show)
 
+type TagDeclaration = Maybe Text
+type ArrayDeclaration = Maybe (Maybe ExprArithmetic) -- Not an array, [], [expr]
+
+data OpModifier = 
+      OpConst
+    | OpStatic
+      deriving (Show)
+
+type VariableModifiers = [OpModifier]
+
 data Statement = 
       StmtSeq [Statement]
-    | StmtAss Text ExprAssignment
+    | StmtNew VariableModifiers TagDeclaration Text ArrayDeclaration ExprAssignment
+    | StmtDecl VariableModifiers TagDeclaration Text ArrayDeclaration
+    | StmtAss Text ArrayDeclaration ExprAssignment
     | StmtIf ExprBoolean Statement
     | StmtIfElse ExprBoolean Statement Statement
     | StmtWhile ExprBoolean Statement

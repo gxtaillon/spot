@@ -30,6 +30,7 @@ langDef = Token.LanguageDef
                               , "native", "public", "normal", "static", "stock"
                               ,     "forward"
                               , "private", "protected"
+                              , "new", "decl"
                               ]
     , Token.reservedOpNames = [ "+", "-", "*", "/", "="
                               , "<", ">"
@@ -89,6 +90,8 @@ statement' = try ifElseStmt
          <|> ifStmt
          <|> whileStmt
          <|> doWhileStmt
+         <|> declStmt
+         <|> newStmt
          <|> assignStmt
 
 bracedStmt :: Parser Statement
@@ -132,15 +135,57 @@ doWhileStmt = do
 
 assignStmt :: Parser Statement
 assignStmt = do 
-    var  <- identifier
+    var <- identifier
+    marr <- arrayDeclaration
     reservedOp "="
     expr <- exprAssignment
     _ <- semicolon
-    return $ StmtAss var expr
+    return $ StmtAss var marr expr
+
+declStmt :: Parser Statement
+declStmt = do 
+    reserved "decl"
+    ms <- variableModifiers
+    mtag <- tagDeclaration
+    var <- identifier
+    marr <- arrayDeclaration
+    _ <- semicolon
+    return $ StmtDecl ms mtag var marr
+    
+newStmt :: Parser Statement
+newStmt = do 
+    reserved "new"
+    ms <- variableModifiers
+    mtag <- tagDeclaration
+    var <- identifier
+    marr <- arrayDeclaration
+    reservedOp "="
+    expr <- exprAssignment
+    _ <- semicolon
+    return $ StmtNew ms mtag var marr expr
+
+tagDeclaration :: Parser TagDeclaration
+tagDeclaration = optionMaybe $ try $ do
+    tag <- identifier <|> liftM T.pack (count 1 (char '_'))
+    reservedOp ":"
+    return tag
+
+arrayDeclaration :: Parser ArrayDeclaration
+arrayDeclaration = optionMaybe $ try $ do 
+    reservedOp "["
+    expr <- optionMaybe (try exprArithmetic)
+    reservedOp "]"
+    return expr
 
 exprAssignment :: Parser ExprAssignment
-exprAssignment = try (exprBoolean >>= return . ExprAssBool)
-             <|> (exprArithmetic >>= return . ExprAssAr)
+exprAssignment = try (liftM ExprAssBool exprBoolean)
+             <|> (liftM ExprAssAr exprArithmetic)
+
+variableModifiers :: Parser VariableModifiers
+variableModifiers = many $ choice [
+      (reserved "const" >> return OpConst)
+    , (reserved "static" >> return OpStatic)
+    ]
 
 exprBoolean :: Parser ExprBoolean
 exprBoolean = buildExpressionParser opBoolean termBoolean

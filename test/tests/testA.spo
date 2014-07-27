@@ -1,7 +1,7 @@
-a=treew;
-b=2;
-c=True;
+new abc:a=treew;
+decl Int:b[asd];
+new const static bool:c=True;
 if (true) { a=1; }
 if (a<b) {a=1;b=3;} else { b=2; c=patate+3; }
 while (!true) a=2;
-do { patente=a<b; } while (false);
+do { new patente=a<b; } while (false);
