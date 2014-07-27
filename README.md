@@ -1,7 +1,7 @@
 SourcePawn Object 
 ====
 
-This is the e current developpement branch.
+This is the current developpement branch.
 
 Quick info
 ----------
