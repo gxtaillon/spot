@@ -1,7 +1,11 @@
 SourcePawn Object 
 ====
 
-This is the current developpement branch.
+<a href="http://www.cs.uu.nl/~daan/parsec.html">
+ <img src="http://www.cs.uu.nl/~daan/images/parsec.gif"
+      alt="Parsec logo" hspace=20 border=0
+      style="float: right; border: none; padding-left: 4pt">
+</a>
 
 Quick info
 ----------
@@ -30,5 +34,5 @@ Main Features (for now)
 
 Notes
 -----
-1. <span name="note1"></span> SPO programs are bundled and compiled with their own [static memory manager](test/spo/core/memory.sp). This means that their coresponding SMX files will be sensibly larger than one would expect.
+1. <a name="note1"></a>SPO programs are bundled and compiled with their own [static memory manager](test/spo/core/memory.sp). This means that their coresponding SMX files will be sensibly larger than one would expect.
 
