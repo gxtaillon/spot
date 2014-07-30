@@ -1,5 +1,5 @@
-new abc:a=treew;
-decl Int:b[asd];
+new static abc:a=treew;
+decl const Int:b[asd];
 new const static bool:c=True;
 if (true) { a={1,2+abc[xyz[1]],ab}; a=1; }
 if (a<b) {a=1;b=3;} else { b=2; c=patate+3; }

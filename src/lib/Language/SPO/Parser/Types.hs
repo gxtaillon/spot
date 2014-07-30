@@ -9,6 +9,10 @@ module Language.SPO.Parser.Types
     , ArrayDeclaration
     , VariableModifiers
     , OpModifier (..)
+    , OpFuncModifier (..)
+    , FuncModifier
+    , OpFuncArgModifier (..)
+    , FuncArgModifiers
     , Statement (..)
     ) where
 
@@ -62,6 +66,25 @@ data OpModifier =
 
 type VariableModifiers = [OpModifier]
 
+data OpFuncModifier =
+      OpFNative
+    | OpFPublic
+    | OpFNormal
+    | OpFStatic
+    | OpFStock
+    | OpFForward
+      deriving (Show)
+
+type FuncModifier = Maybe OpFuncModifier
+
+data OpFuncArgModifier = 
+      OpFAConst
+--    | OpFAIn
+--    | OpFAOut
+      deriving (Show)
+
+type FuncArgModifiers = [OpFuncArgModifier]
+
 data Statement = 
       StmtSeq [Statement]
     | StmtNew VariableModifiers TagDeclaration Text ArrayDeclaration (Maybe ExprAssignment)
@@ -71,4 +94,5 @@ data Statement =
     | StmtIfElse ExprBoolean Statement Statement
     | StmtWhile ExprBoolean Statement
     | StmtDoWhile ExprBoolean Statement
+    | StmtFunc FuncModifier TagDeclaration Text [(FuncArgModifiers,TagDeclaration,Text,Bool)] Statement
       deriving (Show)

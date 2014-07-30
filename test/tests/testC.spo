@@ -1,0 +1,2 @@
+new a = 1;
+native abc:f(const asv:a[]) { decl a; }

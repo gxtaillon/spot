@@ -5,6 +5,7 @@ module Language.SPO.Parser.PrimaryParser
 
 import Control.Monad
 import Data.Functor.Identity
+import Data.Maybe
 import qualified Data.Text as T
 import Text.Parsec
 import Text.Parsec.Text
@@ -53,6 +54,9 @@ reserved   = Token.reserved   lexer
 reservedOp :: String -> Parser ()
 reservedOp = Token.reservedOp lexer
 
+symbol     :: String -> Parser String
+symbol     = Token.symbol     lexer
+
 integer    :: Parser Integer
 integer    = Token.integer    lexer
 
@@ -64,6 +68,9 @@ comma      = Token.comma      lexer
 
 whiteSpace :: Parser ()
 whiteSpace = Token.whiteSpace lexer
+
+commaSep   :: Parser a -> Parser [a]
+commaSep   = Token.commaSep   lexer
 
 parens, braces ,{- angles,  -} brackets :: forall a. Parser a -> Parser a
 parens     = Token.parens     lexer -- ()
@@ -92,6 +99,7 @@ statements = do
 
 statement' :: Parser Statement
 statement' = try ifElseStmt
+         <|> funcStmt
          <|> ifStmt
          <|> whileStmt
          <|> doWhileStmt
@@ -168,6 +176,34 @@ newStmt = do
     _ <- semicolon
     return $ StmtNew ms mtag var marr mexpr
 
+funcStmt :: Parser Statement
+funcStmt = do
+    m <- opFuncModifier
+    mtag <- tagDeclaration
+    var <- identifier    
+    args <- parens $ commaSep $ do
+        ms <- funcArgModifiers
+        matag <- tagDeclaration
+        arg <- identifier
+        marr <- optionMaybe $ symbol "[" >> symbol "]"
+        return $ (ms, matag, arg, isJust marr)
+    stmt <- braces $ statement 
+    return $ StmtFunc m mtag var args stmt
+
+opFuncModifier :: Parser FuncModifier
+opFuncModifier = do
+    ms <- many $ (reserved "native" >> return OpFNative)
+    if null ms 
+        then return Nothing
+        else if length ms > 1 
+            then fail "unpexpected modifier"
+            else return $ Just $ head ms
+
+funcArgModifiers :: Parser FuncArgModifiers
+funcArgModifiers = many $ (reserved "const" >> return OpFAConst)
+--                      <|> (reserved "in"    >> return OpFAIn)
+--                      <|> (reserved "out"   >> return OpFAOut)
+
 tagDeclaration :: Parser TagDeclaration
 tagDeclaration = optionMaybe $ try $ do
     tag <- identifier <|> liftM T.pack (count 1 (char '_'))
@@ -187,10 +223,9 @@ exprAssignment = try (liftM ExprAssBool exprBoolean)
              <|> (liftM ExprAssArrayInit (braces (sepBy exprArithmetic comma)))
 
 variableModifiers :: Parser VariableModifiers
-variableModifiers = many $ choice [
-      (reserved "const" >> return OpConst)
-    , (reserved "static" >> return OpStatic)
-    ]
+variableModifiers = many $ (reserved "const"  >> return OpConst)
+                       <|> (reserved "static" >> return OpStatic)
+    
 
 exprBoolean :: Parser ExprBoolean
 exprBoolean = buildExpressionParser opBoolean termBoolean
