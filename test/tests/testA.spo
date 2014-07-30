@@ -1,7 +1,7 @@
 new static abc:a=treew;
 decl const Int:b[asd];
 new const static bool:c=True;
-if (true) { a={1,2+abc[xyz[1]],ab}; a=1; }
-if (a<b) {a=1;b=3;} else { b=2; c=patate+3; }
-while (!true) a=2;
+if (true) { new a={1,2+abc[xyz[++1--]],--ab++}; new a=1; }
+if (a<b) { new a=1; new b=3;} else { new b=2; new c=patate+3; }
+while (!true) new a=2;
 do { new patente=a<b; } while (false);

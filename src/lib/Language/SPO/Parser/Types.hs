@@ -3,7 +3,8 @@ module Language.SPO.Parser.Types
     , OpBinBoolean (..)
     , OpBinRelational (..)
     , ExprArithmetic (..)
-    , OpBinArithemic (..)
+    , OpBinArithmetic (..)
+    , OpUnaArithmetic (..)
     , ExprAssignment (..)
     , TagDeclaration
     , ArrayDeclaration
@@ -39,13 +40,21 @@ data ExprArithmetic =
     | ExprInt Integer
     | ExprChar Char
     | ExprString Text
-    | ExprNeg ExprArithmetic
-    | ExprBinAr OpBinArithemic ExprArithmetic ExprArithmetic
+    | ExprUnaAr OpUnaArithmetic ExprArithmetic
+    | ExprBinAr OpBinArithmetic ExprArithmetic ExprArithmetic
     | ExprIndex Text ExprArithmetic
-    | ExprFunc Text [ExprArithmetic]
+    | ExprFuncCall Text [ExprArithmetic]
       deriving (Show)
 
-data OpBinArithemic = 
+data OpUnaArithmetic =
+      OpNegate
+    | OpPreInc
+    | OpPostInc
+    | OpPreDec
+    | OpPostDec
+      deriving (Show)
+
+data OpBinArithmetic = 
       OpAdd 
     | OpSub 
     | OpMul 
@@ -94,6 +103,8 @@ data Statement =
     | StmtIfElse ExprBoolean Statement Statement
     | StmtWhile ExprBoolean Statement
     | StmtDoWhile ExprBoolean Statement
+    | StmtFor Statement ExprBoolean ExprArithmetic Statement
     | StmtReturn ExprAssignment
     | StmtFunc OpFuncModifier TagDeclaration Text [(FuncArgModifiers,TagDeclaration,Text,Bool,Maybe ExprAssignment)] Statement
+    | StmtFuncCall Text [ExprArithmetic]
       deriving (Show)

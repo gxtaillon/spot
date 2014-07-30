@@ -37,6 +37,7 @@ langDef = Token.LanguageDef
                               ]
     , Token.reservedOpNames = [ "+", "-", "*", "/", "="
                               , "<", ">"
+                              , "++", "--"
                               , "!", "&&", "||"
                               ]
     , Token.caseSensitive   = True
@@ -68,9 +69,6 @@ integer    = Token.integer    lexer
 
 semicolon  ::  Parser String
 semicolon  = Token.semi       lexer
-
-comma      :: Parser String
-comma      = Token.comma      lexer
 
 whiteSpace :: Parser ()
 whiteSpace = Token.whiteSpace lexer
@@ -105,7 +103,9 @@ statements = do
 
 statement' :: Parser Statement
 statement' = try ifElseStmt
-         <|> funcStmt
+         <|> try funcStmt
+         <|> forStmt
+         <|> funcCallStmt
          <|> returnStmt
          <|> ifStmt
          <|> whileStmt
@@ -152,6 +152,18 @@ doWhileStmt = do
     cond <- parens exprBoolean
     _ <- semicolon
     return $ StmtDoWhile cond stmt
+
+forStmt :: Parser Statement
+forStmt = do
+    reserved "for"
+    (ini, cond, it) <- parens $ do
+        ini <- newStmt
+        cond <- exprBoolean
+        _ <- semicolon
+        it <- exprArithmetic
+        return $ (ini, cond, it)
+    stmt <- bracedStmt
+    return $ StmtFor ini cond it stmt
 
 assignStmt :: Parser Statement
 assignStmt = do 
@@ -207,6 +219,18 @@ funcStmt = do
     stmt <- braces $ statement 
     return $ StmtFunc m mtag var args stmt
 
+funcCallStmt :: Parser Statement
+funcCallStmt = do 
+    (var,expr) <- funcCallInternal
+    _ <- semicolon
+    return $ StmtFuncCall var expr
+
+funcCallInternal :: Parser (T.Text, [ExprArithmetic])
+funcCallInternal = do
+    var <- identifier
+    expr <- parens $ commaSep exprArithmetic
+    return $ (var, expr)
+
 opFuncModifier :: Parser OpFuncModifier
 opFuncModifier = do
     ms <- many $ (reserved "native" >> return OpFNative)
@@ -261,7 +285,11 @@ opBoolean = [ [Prefix (reservedOp "!"  >> return (ExprNot          ))          
             ]
 
 opArithmetic :: OperatorTable T.Text () Identity ExprArithmetic
-opArithmetic = [ [Prefix (reservedOp "-" >> return (ExprNeg        ))          ]
+opArithmetic = [ [Prefix (reservedOp "-" >> return (ExprUnaAr OpNegate))       ]
+               , [Prefix  (reservedOp "++" >> return (ExprUnaAr OpPreInc))     ]
+               , [Postfix (reservedOp "++" >> return (ExprUnaAr OpPostInc))    ]
+               , [Prefix  (reservedOp "--" >> return (ExprUnaAr OpPreDec))     ]
+               , [Postfix (reservedOp "--" >> return (ExprUnaAr OpPostDec))    ]
                , [Infix  (reservedOp "*" >> return (ExprBinAr OpMul)) AssocLeft]
                , [Infix  (reservedOp "/" >> return (ExprBinAr OpDiv)) AssocLeft]
                , [Infix  (reservedOp "+" >> return (ExprBinAr OpAdd)) AssocLeft]
@@ -273,14 +301,12 @@ termArithmetic = parens exprArithmetic
              <|> try (do var <- identifier
                          expr <- brackets exprArithmetic
                          return $ ExprIndex var expr)
-             <|> try (do var <- identifier
-                         expr <- parens $ commaSep exprArithmetic
-                         return $ ExprFunc var expr)
+             <|> try (do (var,expr) <- funcCallInternal
+                         return $ ExprFuncCall var expr)
              <|> liftM ExprVar identifier
              <|> liftM ExprInt integer
              <|> liftM ExprChar charLiteral
              <|> liftM ExprString stringLiteral
-             
 
 termBoolean :: Parser ExprBoolean
 termBoolean = parens exprBoolean

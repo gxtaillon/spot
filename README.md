@@ -39,6 +39,7 @@ Development
 * Everything is packaged with cabal, use your everyday `cabal`esque commands :
 ```
 cabal update
+cabal configure
 cabal install --only-dependencies
 cabal build
 cabal run spot -- path/to/file command

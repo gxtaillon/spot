@@ -1,4 +1,6 @@
 new a = a[a]<a;
-forward abc:f(const asv:a[]) { decl a; }
+forward abc:F(const asv:a[]) { decl a; }
 new b = f(1,f(a[a]));
 g(a="1") { return a(); }
+forward h() { decl a; f(); }
+for (new i=0; a<10; ++i) print('a');

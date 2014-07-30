@@ -1,0 +1,3 @@
+public OnPluginStart() {
+    PrintToServer("Hello World!");
+}
