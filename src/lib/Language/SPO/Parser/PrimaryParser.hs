@@ -54,6 +54,12 @@ reserved   = Token.reserved   lexer
 reservedOp :: String -> Parser ()
 reservedOp = Token.reservedOp lexer
 
+charLiteral   :: Parser Char
+charLiteral   = Token.charLiteral lexer
+
+stringLiteral :: Parser T.Text
+stringLiteral = Token.stringLiteral lexer >>= return . T.pack
+
 symbol     :: String -> Parser String
 symbol     = Token.symbol     lexer
 
@@ -100,6 +106,7 @@ statements = do
 statement' :: Parser Statement
 statement' = try ifElseStmt
          <|> funcStmt
+         <|> returnStmt
          <|> ifStmt
          <|> whileStmt
          <|> doWhileStmt
@@ -155,6 +162,13 @@ assignStmt = do
     _ <- semicolon
     return $ StmtAss var marr expr
 
+returnStmt :: Parser Statement
+returnStmt = do
+    reserved "return"
+    expr <- exprAssignment
+    _ <- semicolon
+    return $ StmtReturn expr
+
 declStmt :: Parser Statement
 declStmt = do 
     reserved "decl"
@@ -186,18 +200,25 @@ funcStmt = do
         matag <- tagDeclaration
         arg <- identifier
         marr <- optionMaybe $ symbol "[" >> symbol "]"
-        return $ (ms, matag, arg, isJust marr)
+        expr <- optionMaybe $ do
+            reservedOp "="
+            exprAssignment
+        return $ (ms, matag, arg, isJust marr, expr)
     stmt <- braces $ statement 
     return $ StmtFunc m mtag var args stmt
 
-opFuncModifier :: Parser FuncModifier
+opFuncModifier :: Parser OpFuncModifier
 opFuncModifier = do
     ms <- many $ (reserved "native" >> return OpFNative)
+             <|> (reserved "public" >> return OpFPublic)
+             <|> (reserved "static" >> return OpFStatic)
+             <|> (reserved "stock" >> return OpFStock)
+             <|> (reserved "forward" >> return OpFForward)
     if null ms 
-        then return Nothing
+        then return OpFNormal
         else if length ms > 1 
             then fail "unpexpected modifier"
-            else return $ Just $ head ms
+            else return $ head ms
 
 funcArgModifiers :: Parser FuncArgModifiers
 funcArgModifiers = many $ (reserved "const" >> return OpFAConst)
@@ -219,8 +240,8 @@ arrayDeclaration = optionMaybe $ try $ do
 
 exprAssignment :: Parser ExprAssignment
 exprAssignment = try (liftM ExprAssBool exprBoolean)
-             <|> (liftM ExprAssAr exprArithmetic)
-             <|> (liftM ExprAssArrayInit (braces (sepBy exprArithmetic comma)))
+             <|> liftM ExprAssAr exprArithmetic
+             <|> liftM ExprAssArrayInit (braces (commaSep exprArithmetic))
 
 variableModifiers :: Parser VariableModifiers
 variableModifiers = many $ (reserved "const"  >> return OpConst)
@@ -240,8 +261,7 @@ opBoolean = [ [Prefix (reservedOp "!"  >> return (ExprNot          ))          
             ]
 
 opArithmetic :: OperatorTable T.Text () Identity ExprArithmetic
-opArithmetic = [ [Postfix (brackets exprArithmetic >>= return . ExprIndex)     ]
-               , [Prefix (reservedOp "-" >> return (ExprNeg        ))          ]
+opArithmetic = [ [Prefix (reservedOp "-" >> return (ExprNeg        ))          ]
                , [Infix  (reservedOp "*" >> return (ExprBinAr OpMul)) AssocLeft]
                , [Infix  (reservedOp "/" >> return (ExprBinAr OpDiv)) AssocLeft]
                , [Infix  (reservedOp "+" >> return (ExprBinAr OpAdd)) AssocLeft]
@@ -250,8 +270,17 @@ opArithmetic = [ [Postfix (brackets exprArithmetic >>= return . ExprIndex)     ]
 
 termArithmetic :: Parser ExprArithmetic
 termArithmetic = parens exprArithmetic
+             <|> try (do var <- identifier
+                         expr <- brackets exprArithmetic
+                         return $ ExprIndex var expr)
+             <|> try (do var <- identifier
+                         expr <- parens $ commaSep exprArithmetic
+                         return $ ExprFunc var expr)
              <|> liftM ExprVar identifier
              <|> liftM ExprInt integer
+             <|> liftM ExprChar charLiteral
+             <|> liftM ExprString stringLiteral
+             
 
 termBoolean :: Parser ExprBoolean
 termBoolean = parens exprBoolean

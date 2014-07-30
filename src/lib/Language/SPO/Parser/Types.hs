@@ -10,7 +10,6 @@ module Language.SPO.Parser.Types
     , VariableModifiers
     , OpModifier (..)
     , OpFuncModifier (..)
-    , FuncModifier
     , OpFuncArgModifier (..)
     , FuncArgModifiers
     , Statement (..)
@@ -38,9 +37,12 @@ data OpBinRelational =
 data ExprArithmetic = 
       ExprVar Text
     | ExprInt Integer
+    | ExprChar Char
+    | ExprString Text
     | ExprNeg ExprArithmetic
     | ExprBinAr OpBinArithemic ExprArithmetic ExprArithmetic
-    | ExprIndex ExprArithmetic ExprArithmetic
+    | ExprIndex Text ExprArithmetic
+    | ExprFunc Text [ExprArithmetic]
       deriving (Show)
 
 data OpBinArithemic = 
@@ -75,8 +77,6 @@ data OpFuncModifier =
     | OpFForward
       deriving (Show)
 
-type FuncModifier = Maybe OpFuncModifier
-
 data OpFuncArgModifier = 
       OpFAConst
 --    | OpFAIn
@@ -94,5 +94,6 @@ data Statement =
     | StmtIfElse ExprBoolean Statement Statement
     | StmtWhile ExprBoolean Statement
     | StmtDoWhile ExprBoolean Statement
-    | StmtFunc FuncModifier TagDeclaration Text [(FuncArgModifiers,TagDeclaration,Text,Bool)] Statement
+    | StmtReturn ExprAssignment
+    | StmtFunc OpFuncModifier TagDeclaration Text [(FuncArgModifiers,TagDeclaration,Text,Bool,Maybe ExprAssignment)] Statement
       deriving (Show)

@@ -1,2 +1,4 @@
-new a = 1;
-native abc:f(const asv:a[]) { decl a; }
+new a = a[a]<a;
+forward abc:f(const asv:a[]) { decl a; }
+new b = f(1,f(a[a]));
+g(a="1") { return a(); }

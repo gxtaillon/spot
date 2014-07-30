@@ -1,0 +1,3 @@
+new a = "abc";
+new b = 'a';
+new c = "\0\123"+"oooooleoleoleole ole ole";
