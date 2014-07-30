@@ -29,7 +29,8 @@ Using the parser and compiler as a base, a simple interpreter could be created. 
 Main Features (planned)
 -----------------------
 * Backward compatibility with SourcePawn 1.6 and earlier
-* `Class`es & * `Interface`s
+* `Class`es
+* `Interface`s
 * Polymorphism
 
 Development
