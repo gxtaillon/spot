@@ -17,7 +17,7 @@ From Object to Pawn
 --------------
 1. The [Parsec](http://legacy.cs.uu.nl/daan/parsec.html) based `PrimaryParser` generates a detailed tree of statements and expressions from an input program. This is the syntaxic analysis.
 
-2. * This tree is then given to the compiler (Not implemented yet) which will explore and verify the integrity of the tree. For instance, conflicting types, undefined variables, etc. This is the first of two semantic analyses.
+2. * This tree is then given to the compiler which will explore and verify the integrity of the tree. For instance, conflicting types, undefined variables, etc. This is the first of two semantic analyses.
   * There might be an added optimizer at this stage but it will not be included in the first release. 
 
 3. The final step, translation, will take the compiler or optimizer output tree and translate its nodes into human readable code. It will be possible to have multiple translators. The first to be implemented will produce SourcePawn 1.6 compatible code. Other translators could be used to create profilable plugins or even standalone programs.
@@ -26,11 +26,32 @@ Interpreter
 -----------
 Using the parser and compiler as a base, a simple interpreter could be created. This would allow scripts to be tested without the burden of running them through a Source server. Calls to native functions would need to be ignored for simplicity's sake but, stubs could be written to show proper execution. 
 
-Main Features (for now)
+Main Features (planned)
 -----------------------
 * Backwards compatible with SourcePawn 1.6 and earlier
 * `Class`es & * `Interface`s
 * Inheritance & Polyorphism
+
+Development
+-----
+* *It is required to have the `haskell-platform` or equivalent packages installed.*
+* Clone the repository on your computer
+* Everything is packaged with cabal, use your everyday `cabal`esque commands :
+```
+cabal update
+cabal install --only-dependencies
+cabal build
+cabal run spot -- path/to/file command
+```
+   The only available command as of `v0.0` is `Show` which runs the parser on the given file and then either displays the `Statement` tree or an error message. For instance, using the input :
+```SourcePawn
+public OnPluginStart() { PrintToServer("Hello World!"); }
+```
+we get :
+```Haskell
+StmtFunc OpFPublic Nothing "OnPluginStart" [] (StmtFuncCall "PrintToServer" [ExprString "Hello World!"])
+```
+
 
 Notes
 -----
