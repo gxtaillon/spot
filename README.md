@@ -30,7 +30,7 @@ Main Features (planned)
 -----------------------
 * Backward compatibility with SourcePawn 1.6 and earlier
 * `Class`es & * `Interface`s
-* Inheritance & Polyorphism
+* Polymorphism
 
 Development
 -----
