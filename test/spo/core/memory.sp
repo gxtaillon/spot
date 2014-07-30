@@ -3,21 +3,34 @@
     Implements a memory manager which adds pointer like features to SourcePawn.
     
     Configuration:
-        _SPO_Conf_Heap_Size                         Defines the size of the heap. (Preferably a power of 2 and must be divisible by _SPO_Conf_Heap_Page_Size)
-        _SPO_Conf_Heap_Page_Size                    Defines the size of each pages/frames in the heap. (A lower value will decrease fragmentation but increase the size of pointers)
+        _SPO_Conf_Heap_Size               Defines the size of the heap
+                                            (Preferably a power of 2 and must be
+                                            divisible by 
+                                            _SPO_Conf_Heap_Page_Size).
+        _SPO_Conf_Heap_Page_Size          Defines the size of each pages/frames
+                                            in the heap (A lower value will 
+                                            decrease fragmentation but increase 
+                                            the size of pointers).
     
-    Functions (Macros):     Big O       Big Omega       
-      M _SPO_AllocationSize O(1)        O(1)        Calculates the required pointer size for a given number of cells
-      M _SPO_Decl           -           -           Declares a pointer
-        _SPO_Alloc          O(p*h/f)    O(p)        Allocates memory to a pointer*
-      M _SPO_New            -           -           Decl and Alloc
-      M _SPO_NewC           -           -           Same as New but asks for contigous allocation and returns a memory offset
-      M _SPO_Deref          O(1)        O(1)        Access a cell in memory
-      M _SPO_DerefC         O(1)        O(1)        Same Deref but uses direct offset to access a cell in memory. (Use with NewC)
-        _SPO_CopyTo         O(min{d,a}) O(min{d,a}) Copies an array in memory
-        _SPO_CopyFrom       O(min{d,a}) O(min{d,a}) Copies an array from memory
-        _SPO_Free           O(p)        O(p)        Frees the memory allocated to a pointer
-        _SPO_FreeC          O(p)        O(p)        Same as Free but uses the memory offset provided by NewC
+    Functions (Macros):     Big O        Definition
+      M _SPO_AllocationSize  O(1)         Calculates the required pointer size 
+                                            for a given number of cells.
+      M _SPO_Decl            -            Declares a pointer.
+        _SPO_Alloc           O(p*h/f)     Allocates memory to a pointer*.
+      M _SPO_New             -            Decl and Alloc.
+      M _SPO_NewC            -            Same as New but asks for contigous 
+                                            allocation and returns a memory 
+                                            offset.
+      M _SPO_Deref           O(1)         Access a cell in memory.
+      M _SPO_DerefC          O(1)         Same Deref but uses direct offset to 
+                                            access a cell in memory (Use with 
+                                            NewC).
+        _SPO_CopyTo          O(min{d,a})  Copies an array in memory.
+        _SPO_CopyFrom        O(min{d,a})  Copies an array from memory.
+        _SPO_Free            O(p)         Frees the memory allocated to a 
+                                            pointer.
+        _SPO_FreeC           O(p)         Same as Free but uses the memory 
+                                            offset provided by NewC.
       where:
         h                   Heap size
         f                   Frame size
@@ -25,13 +38,24 @@
         d                   Pointer's data size
         a                   Array size
     Structures:
-        Pointer             A pointer is an array containing the translation table (page table) to reach the corresponding frames in the heap. The size of a pointer is defined by _SPO_AllocationSize(d). It is not d!
-        Frame               Frames are of fixed size and divide the heap in allocatable chuncks of memory (cells).
-        Pages               Pages are exactly the same size as frames. They are fitted in frames using arbitrary calculations. This allows virtual (or logical) addressing of memory (cells) in the heap and reduces greatly the chances that the heap will suffer from external fragmentation. However it introduces some internal fragmentation in the allocated chuncks but, depending on the page size, this is not something to be worried about.
-        Heap                A very big static array with many helpers to guide strangers around and inside it.
+        Pointer             A pointer is an array containing the translation 
+                              table (page table) to reach the corresponding 
+                              frames in the heap. The size of a pointer is 
+                              defined by _SPO_AllocationSize(d). It is not d!
+        Frame               Frames are of fixed size and divide the heap in 
+                              allocatable chuncks of memory (cells).
+        Pages               Pages are exactly the same size as frames. They are 
+                              fitted in frames using arbitrary calculations. 
+                              This allows virtual (or logical) addressing of 
+                              memory (cells) in the heap and reduces greatly the
+                              chances that the heap will suffer from external 
+                              fragmentation. However it introduces some internal
+                              fragmentation but, with the default page size, 
+                              this is not something to be worried about.
+        Heap                A very big static array containing the frames.
         
     Exemple:
-        SourcePawn                                          C
+        SourcePawn                                        C
         --- 
         _SPO_New(myBuffer, 50);                            int* myBuffer = (int*) malloc(50);
         --- or
@@ -43,7 +67,10 @@
         _SPO_Free(myBuffer);                               free(myBuffer);
         
     Notes:
-      * By default Alloc does not allocate frames contiguously but can de asked to. It is preferable to leave it so for all but very small allocations as it more likely that Alloc will be able to complete the request using isolated frames in the heap.
+      * By default Alloc does not allocate frames contiguously but can de asked 
+          to. It is preferable to leave it so for all but very small allocations
+          as it more likely that Alloc will be able to complete the request 
+          using isolated frames in the heap.
 */
 #if defined _SPO_Inc_Memory
     #endinput
@@ -116,11 +143,13 @@ static _SPO_FindNextFreeFramePos(startingFrame) {
 /**
  * ptr      The ptr which must be allocated
  * requireContiguous
- *          If true, Alloc will return a contiguous block of cells, otherwise it must not be assumed that it will be.
+ *          If true, Alloc will return a contiguous block of cells, otherwise it
+ *            must not be assumed that it will be.
  * sizeP    The size of the pointer
  * return   True if no problem were encountered, otherwise false.
  */
-stock bool:_SPO_Alloc(ptr[], requireContigous = false, sizeP = sizeof ptr) {    // ptr is for page translator, it conviently resemble a pointer! :wink:
+stock bool:_SPO_Alloc(ptr[], requireContigous = false, sizeP = sizeof ptr) {
+    // ptr is for page translator, it conviently resembles pointer!
     if (
         // The user is sending crap
         sizeP < 0
@@ -207,12 +236,13 @@ stock _SPO_FreeC(pos, size) {
  */
 #define _SPO_DerefPos(%0,%1)        ((%0)[(%1) / _SPO_Conf_Heap_Page_Size] * _SPO_Conf_Heap_Page_Size) + ((%1) % _SPO_Conf_Heap_Page_Size)
 
-/**
+/** 
+ * Gives access to the allocated cell
  * %0       The pointer to dereference
  * %1       The offset to dereference
  * return   The value stored at the corresponding pointer and offset
  */
-#define _SPO_Deref(%0,%1)           _SPO_Heap[_SPO_DerefPos(%0, %1)]            // Gives access to the allocated cell
+#define _SPO_Deref(%0,%1)           _SPO_Heap[_SPO_DerefPos(%0, %1)]
 
 /**
  * %0       The identifier of the pointer
@@ -231,7 +261,8 @@ stock _SPO_FreeC(pos, size) {
 /**
  * %0       The identifier of the pointer
  * %1       The size, in cells, of the pointer's data
- * effect   declares a pointer (contiguous) in the current scope and a reference to its first position in the heap
+ * effect   declares a pointer (contiguous) in the current scope and a reference
+ *            to its first position in the heap
  */
 #define _SPO_NewC(%0,%1)            _SPO_Decl(%0_ptr, %1); _SPO_Alloc((%0_ptr), true); new %0 = _SPO_DerefPos(%0_ptr, 0)
 
@@ -277,5 +308,6 @@ stock _SPO_CopyFrom(ptr[], src[], srcOffset = 0, ptrOffset = 0, srcSize = sizeof
     }
 }
 
-#undef _SPO_ReserveFrame                        // This macro uses a static variable and thus can't be used outside this file
+// These macros use a static variable and thus can't be used outside this file.
+#undef _SPO_ReserveFrame 
 #undef _SPO_FreeFrame
