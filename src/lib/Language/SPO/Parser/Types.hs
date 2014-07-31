@@ -1,11 +1,15 @@
 module Language.SPO.Parser.Types 
-    ( ExprBoolean (..)
+    ( 
+    -- Expression
+      ExprBoolean (..)
     , OpBinBoolean (..)
     , OpBinRelational (..)
     , ExprArithmetic (..)
     , OpBinArithmetic (..)
     , OpUnaArithmetic (..)
     , ExprAssignment (..)
+    
+    -- Statement
     , TagDeclaration
     , ArrayDeclaration
     , VariableModifiers
@@ -17,6 +21,7 @@ module Language.SPO.Parser.Types
     ) where
 
 import Data.Text
+import qualified Data.Map.Strict as M
 
 data ExprBoolean = 
       ExprBool Bool

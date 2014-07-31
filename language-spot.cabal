@@ -38,6 +38,7 @@ library
                    , parsec
                    , text
                    , transformers
+                   , containers
 
 executable spot
     extensions:      OverloadedStrings

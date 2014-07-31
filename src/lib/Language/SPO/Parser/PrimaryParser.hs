@@ -6,6 +6,7 @@ module Language.SPO.Parser.PrimaryParser
 import Control.Monad
 import Data.Functor.Identity
 import Data.Maybe
+import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 import Text.Parsec
 import Text.Parsec.Text
@@ -14,6 +15,21 @@ import Text.Parsec.Language
 import qualified Text.Parsec.Token as Token
 
 import Language.SPO.Parser.Types
+
+type PPState = [M.Map T.Text PrimaryType]
+type PParser = GenParser PPState
+type POperatorTable a = OperatorTable T.Text PPState Identity a
+
+data PrimaryType = 
+      PT_
+    | PTInt
+    | PTFloat
+    | PTBool
+    | PTString
+    | PTChar
+    | PTArray PrimaryType (Maybe Int)
+    | PTUser T.Text
+      deriving (Show)
 
 langDef :: forall u. GenLanguageDef T.Text u Identity
 langDef = Token.LanguageDef
@@ -47,62 +63,63 @@ langDef = Token.LanguageDef
 lexer :: forall u. Token.GenTokenParser T.Text u Identity
 lexer = Token.makeTokenParser langDef
 
-identifier :: Parser T.Text
+identifier :: PParser T.Text
 identifier = Token.identifier lexer >>= return . T.pack
 
-reserved   :: String -> Parser ()
+reserved   :: String -> PParser ()
 reserved   = Token.reserved   lexer
 
-reservedOp :: String -> Parser ()
+reservedOp :: String -> PParser ()
 reservedOp = Token.reservedOp lexer
 
-charLiteral   :: Parser Char
+charLiteral   :: PParser Char
 charLiteral   = Token.charLiteral lexer
 
-stringLiteral :: Parser T.Text
+stringLiteral :: PParser T.Text
 stringLiteral = Token.stringLiteral lexer >>= return . T.pack
 
-symbol     :: String -> Parser String
+symbol     :: String -> PParser String
 symbol     = Token.symbol     lexer
 
-integer    :: Parser Integer
+integer    :: PParser Integer
 integer    = Token.integer    lexer
 
-semicolon  ::  Parser String
+semicolon  ::  PParser String
 semicolon  = Token.semi       lexer
 
-whiteSpace :: Parser ()
+whiteSpace :: PParser ()
 whiteSpace = Token.whiteSpace lexer
 
-commaSep   :: Parser a -> Parser [a]
+commaSep   :: PParser a -> PParser [a]
 commaSep   = Token.commaSep   lexer
 
-parens, braces ,{- angles,  -} brackets :: forall a. Parser a -> Parser a
+parens, braces ,{- angles,  -} brackets :: forall a. PParser a -> PParser a
 parens     = Token.parens     lexer -- ()
 braces     = Token.braces     lexer -- {}
 --angles     = Token.angles     lexer -- <>
 brackets   = Token.brackets   lexer -- []
 
 
--- Main Parser
+-- Primary Parser
 
-whileParser :: Parser Statement
+whileParser :: PParser Statement
 whileParser = do
     whiteSpace
+    modifyState ((:)M.empty)
     stmt <- statement
     eof
     return stmt
 
-statement :: Parser Statement
+statement :: PParser Statement
 statement = parens statement
         <|> statements
 
-statements :: Parser Statement
+statements :: PParser Statement
 statements = do
     list <- sepBy1 statement' whiteSpace
     return $ if length list == 1 then head list else StmtSeq list
 
-statement' :: Parser Statement
+statement' :: PParser Statement
 statement' = try ifElseStmt
          <|> try funcStmt
          <|> forStmt
@@ -115,37 +132,37 @@ statement' = try ifElseStmt
          <|> newStmt
          <|> assignStmt
 
-bracedStmt :: Parser Statement
+bracedStmt :: PParser Statement
 bracedStmt = (try $ statement') 
          <|> braces statement
 
-ifStmt' :: Parser (ExprBoolean, Statement)
+ifStmt' :: PParser (ExprBoolean, Statement)
 ifStmt' = do 
     reserved "if"
     cond  <- parens exprBoolean
     stmt <- bracedStmt
     return (cond,stmt)
 
-ifStmt :: Parser Statement
+ifStmt :: PParser Statement
 ifStmt = do 
     (cond, stmt) <- ifStmt'
     return $ StmtIf cond stmt
 
-ifElseStmt :: Parser Statement
+ifElseStmt :: PParser Statement
 ifElseStmt = do 
     (cond, stmt1) <- ifStmt'
     reserved "else"
     stmt2 <- bracedStmt
     return $ StmtIfElse cond stmt1 stmt2
     
-whileStmt :: Parser Statement
+whileStmt :: PParser Statement
 whileStmt = do 
     reserved "while"
     cond <- parens exprBoolean
     stmt <- bracedStmt
     return $ StmtWhile cond stmt
     
-doWhileStmt :: Parser Statement
+doWhileStmt :: PParser Statement
 doWhileStmt = do 
     reserved "do"
     stmt <- bracedStmt
@@ -154,7 +171,7 @@ doWhileStmt = do
     _ <- semicolon
     return $ StmtDoWhile cond stmt
 
-forStmt :: Parser Statement
+forStmt :: PParser Statement
 forStmt = do
     reserved "for"
     (ini, cond, it) <- parens $ do
@@ -166,7 +183,7 @@ forStmt = do
     stmt <- bracedStmt
     return $ StmtFor ini cond it stmt
 
-assignStmt :: Parser Statement
+assignStmt :: PParser Statement
 assignStmt = do 
     var <- identifier
     marr <- arrayDeclaration
@@ -175,14 +192,14 @@ assignStmt = do
     _ <- semicolon
     return $ StmtAss var marr expr
 
-returnStmt :: Parser Statement
+returnStmt :: PParser Statement
 returnStmt = do
     reserved "return"
     expr <- exprAssignment
     _ <- semicolon
     return $ StmtReturn expr
 
-declStmt :: Parser Statement
+declStmt :: PParser Statement
 declStmt = do 
     reserved "decl"
     ms <- variableModifiers
@@ -192,7 +209,7 @@ declStmt = do
     _ <- semicolon
     return $ StmtDecl ms mtag var marr
     
-newStmt :: Parser Statement
+newStmt :: PParser Statement
 newStmt = do 
     reserved "new"
     ms <- variableModifiers
@@ -203,7 +220,7 @@ newStmt = do
     _ <- semicolon
     return $ StmtNew ms mtag var marr mexpr
 
-funcStmt :: Parser Statement
+funcStmt :: PParser Statement
 funcStmt = do
     m <- opFuncModifier
     mtag <- tagDeclaration
@@ -220,19 +237,19 @@ funcStmt = do
     stmt <- braces $ statement 
     return $ StmtFunc m mtag var args stmt
 
-funcCallStmt :: Parser Statement
+funcCallStmt :: PParser Statement
 funcCallStmt = do 
     (var,expr) <- funcCallInternal
     _ <- semicolon
     return $ StmtFuncCall var expr
 
-funcCallInternal :: Parser (T.Text, [ExprArithmetic])
+funcCallInternal :: PParser (T.Text, [ExprArithmetic])
 funcCallInternal = do
     var <- identifier
     expr <- parens $ commaSep exprArithmetic
     return $ (var, expr)
 
-opFuncModifier :: Parser OpFuncModifier
+opFuncModifier :: PParser OpFuncModifier
 opFuncModifier = do
     ms <- many $ (reserved "native" >> return OpFNative)
              <|> (reserved "public" >> return OpFPublic)
@@ -245,47 +262,47 @@ opFuncModifier = do
             then fail "unpexpected modifier"
             else return $ head ms
 
-funcArgModifiers :: Parser FuncArgModifiers
+funcArgModifiers :: PParser FuncArgModifiers
 funcArgModifiers = many $ (reserved "const" >> return OpFAConst)
 --                      <|> (reserved "in"    >> return OpFAIn)
 --                      <|> (reserved "out"   >> return OpFAOut)
 
-tagDeclaration :: Parser TagDeclaration
+tagDeclaration :: PParser TagDeclaration
 tagDeclaration = optionMaybe $ try $ do
     tag <- identifier <|> liftM T.pack (count 1 (char '_'))
     reservedOp ":"
     return tag
 
-arrayDeclaration :: Parser ArrayDeclaration
+arrayDeclaration :: PParser ArrayDeclaration
 arrayDeclaration = optionMaybe $ try $ do 
     reservedOp "["
     expr <- optionMaybe (try exprArithmetic)
     reservedOp "]"
     return expr
 
-exprAssignment :: Parser ExprAssignment
+exprAssignment :: PParser ExprAssignment
 exprAssignment = try (liftM ExprAssBool exprBoolean)
              <|> liftM ExprAssAr exprArithmetic
              <|> liftM ExprAssArrayInit (braces (commaSep exprArithmetic))
 
-variableModifiers :: Parser VariableModifiers
+variableModifiers :: PParser VariableModifiers
 variableModifiers = many $ (reserved "const"  >> return OpConst)
                        <|> (reserved "static" >> return OpStatic)
     
 
-exprBoolean :: Parser ExprBoolean
+exprBoolean :: PParser ExprBoolean
 exprBoolean = buildExpressionParser opBoolean termBoolean
 
-exprArithmetic :: Parser ExprArithmetic
+exprArithmetic :: PParser ExprArithmetic
 exprArithmetic = buildExpressionParser opArithmetic termArithmetic
 
-opBoolean :: OperatorTable T.Text () Identity ExprBoolean
+opBoolean :: POperatorTable ExprBoolean
 opBoolean = [ [Prefix (reservedOp "!"  >> return (ExprNot          ))          ]
             , [Infix  (reservedOp "&&" >> return (ExprBinBool OpAnd)) AssocLeft]
             , [Infix  (reservedOp "||" >> return (ExprBinBool OpOr )) AssocLeft]
             ]
 
-opArithmetic :: OperatorTable T.Text () Identity ExprArithmetic
+opArithmetic :: POperatorTable ExprArithmetic
 opArithmetic = 
     [ [Prefix  (reservedOp "-"  >> return (ExprUnaAr OpNegate))           ]
     , [Prefix  (reservedOp "~"  >> return (ExprUnaAr OpBNot))             ]
@@ -304,7 +321,7 @@ opArithmetic =
     , [Infix   (reservedOp ">>" >> return (ExprBinAr OpBRShift)) AssocLeft]
     ]
 
-termArithmetic :: Parser ExprArithmetic
+termArithmetic :: PParser ExprArithmetic
 termArithmetic = parens exprArithmetic
              <|> try (do var <- identifier
                          expr <- brackets exprArithmetic
@@ -316,20 +333,20 @@ termArithmetic = parens exprArithmetic
              <|> liftM ExprChar charLiteral
              <|> liftM ExprString stringLiteral
 
-termBoolean :: Parser ExprBoolean
+termBoolean :: PParser ExprBoolean
 termBoolean = parens exprBoolean
           <|> (reserved "true"  >> return (ExprBool True ))
           <|> (reserved "false" >> return (ExprBool False))
           <|> exprRelational
 
-exprRelational :: Parser ExprBoolean
+exprRelational :: PParser ExprBoolean
 exprRelational = do
     a1 <- exprArithmetic
     op <- relation
     a2 <- exprArithmetic
     return $ ExprBinRel op a1 a2
 
-relation :: Parser OpBinRelational
+relation :: PParser OpBinRelational
 relation = (reservedOp ">"  >> return OpGT)
        <|> (reservedOp ">=" >> return OpGE)
        <|> (reservedOp "<"  >> return OpLT)
