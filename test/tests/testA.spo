@@ -3,5 +3,5 @@ decl const Int:b[asd];
 new const static bool:c=True;
 if (true) { new a={1,2+abc[xyz[++1--]],--ab++}; new a=1; }
 if (a<b) { new a=1; new b=3;} else { new b=2; new c=patate+3; }
-while (!true) new a=2;
-do { new patente=a<b; } while (false);
+while (!true) new a=1;
+do { new patente=5-2<=b; } while (b>>1>0);

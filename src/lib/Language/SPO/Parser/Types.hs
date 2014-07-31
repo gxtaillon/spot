@@ -32,7 +32,11 @@ data OpBinBoolean =
 
 data OpBinRelational = 
       OpGT 
+    | OpGE 
     | OpLT 
+    | OpLE 
+    | OpEq 
+    | OpNE 
       deriving (Show)
 
 data ExprArithmetic = 
@@ -52,6 +56,7 @@ data OpUnaArithmetic =
     | OpPostInc
     | OpPreDec
     | OpPostDec
+    | OpBNot
       deriving (Show)
 
 data OpBinArithmetic = 
@@ -59,6 +64,11 @@ data OpBinArithmetic =
     | OpSub 
     | OpMul 
     | OpDiv 
+    | OpBAnd
+    | OpBOr
+    | OpBXor
+    | OpBLShift
+    | OpBRShift
       deriving (Show)
 
 data ExprAssignment =

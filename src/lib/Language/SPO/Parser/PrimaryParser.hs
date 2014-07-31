@@ -35,9 +35,10 @@ langDef = Token.LanguageDef
                               , "return"
                               , "class", "interface"
                               ]
-    , Token.reservedOpNames = [ "+", "-", "*", "/", "="
-                              , "<", ">"
-                              , "++", "--"
+    , Token.reservedOpNames = [ "+", "-", "*", "/", "++", "--"
+                              , "|", "&", "^", "~", "<<", ">>"
+                              , "<", ">", "<=", ">=", "==", "!="
+                              , "="
                               , "!", "&&", "||"
                               ]
     , Token.caseSensitive   = True
@@ -285,16 +286,23 @@ opBoolean = [ [Prefix (reservedOp "!"  >> return (ExprNot          ))          
             ]
 
 opArithmetic :: OperatorTable T.Text () Identity ExprArithmetic
-opArithmetic = [ [Prefix (reservedOp "-" >> return (ExprUnaAr OpNegate))       ]
-               , [Prefix  (reservedOp "++" >> return (ExprUnaAr OpPreInc))     ]
-               , [Postfix (reservedOp "++" >> return (ExprUnaAr OpPostInc))    ]
-               , [Prefix  (reservedOp "--" >> return (ExprUnaAr OpPreDec))     ]
-               , [Postfix (reservedOp "--" >> return (ExprUnaAr OpPostDec))    ]
-               , [Infix  (reservedOp "*" >> return (ExprBinAr OpMul)) AssocLeft]
-               , [Infix  (reservedOp "/" >> return (ExprBinAr OpDiv)) AssocLeft]
-               , [Infix  (reservedOp "+" >> return (ExprBinAr OpAdd)) AssocLeft]
-               , [Infix  (reservedOp "-" >> return (ExprBinAr OpSub)) AssocLeft]
-               ]
+opArithmetic = 
+    [ [Prefix  (reservedOp "-"  >> return (ExprUnaAr OpNegate))           ]
+    , [Prefix  (reservedOp "~"  >> return (ExprUnaAr OpBNot))             ]
+    , [Prefix  (reservedOp "++" >> return (ExprUnaAr OpPreInc))           ]
+    , [Postfix (reservedOp "++" >> return (ExprUnaAr OpPostInc))          ]
+    , [Prefix  (reservedOp "--" >> return (ExprUnaAr OpPreDec))           ]
+    , [Postfix (reservedOp "--" >> return (ExprUnaAr OpPostDec))          ]
+    , [Infix   (reservedOp "*"  >> return (ExprBinAr OpMul))     AssocLeft]
+    , [Infix   (reservedOp "/"  >> return (ExprBinAr OpDiv))     AssocLeft]
+    , [Infix   (reservedOp "+"  >> return (ExprBinAr OpAdd))     AssocLeft]
+    , [Infix   (reservedOp "-"  >> return (ExprBinAr OpSub))     AssocLeft]
+    , [Infix   (reservedOp "&"  >> return (ExprBinAr OpBAnd))    AssocLeft]
+    , [Infix   (reservedOp "|"  >> return (ExprBinAr OpBOr))     AssocLeft]
+    , [Infix   (reservedOp "^"  >> return (ExprBinAr OpBXor))    AssocLeft]
+    , [Infix   (reservedOp "<<" >> return (ExprBinAr OpBLShift)) AssocLeft]
+    , [Infix   (reservedOp ">>" >> return (ExprBinAr OpBRShift)) AssocLeft]
+    ]
 
 termArithmetic :: Parser ExprArithmetic
 termArithmetic = parens exprArithmetic
@@ -322,5 +330,9 @@ exprRelational = do
     return $ ExprBinRel op a1 a2
 
 relation :: Parser OpBinRelational
-relation = (reservedOp ">" >> return OpGT)
-       <|> (reservedOp "<" >> return OpLT)
+relation = (reservedOp ">"  >> return OpGT)
+       <|> (reservedOp ">=" >> return OpGE)
+       <|> (reservedOp "<"  >> return OpLT)
+       <|> (reservedOp "<=" >> return OpLE)
+       <|> (reservedOp "==" >> return OpEq)
+       <|> (reservedOp "!=" >> return OpNE)
