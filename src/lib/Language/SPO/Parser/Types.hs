@@ -10,13 +10,16 @@ module Language.SPO.Parser.Types
     , ExprAssignment (..)
     
     -- Statement
-    , TagDeclaration
-    , ArrayDeclaration
-    , VariableModifiers
-    , OpModifier (..)
-    , OpFuncModifier (..)
-    , OpFuncArgModifier (..)
+    , VarType (..)
+    , Type (..)
+    , VarModifier (..)
+    , VarModifiers
+    , FuncModifier (..)
+    , FuncModifiers
+    , FuncArgModifier (..)
     , FuncArgModifiers
+    , FuncArg
+    , FuncArgs
     , Statement (..)
     ) where
 
@@ -82,17 +85,14 @@ data ExprAssignment =
     | ExprAssArrayInit [ExprArithmetic]
       deriving (Show)
 
-type TagDeclaration = Maybe Text
-type ArrayDeclaration = Maybe (Maybe ExprArithmetic) -- Not an array, [], [expr]
-
-data OpModifier = 
+data VarModifier = 
       OpConst
     | OpStatic
       deriving (Show)
 
-type VariableModifiers = [OpModifier]
+type VarModifiers = [VarModifier]
 
-data OpFuncModifier =
+data FuncModifier =
       OpFNative
     | OpFPublic
     | OpFNormal
@@ -100,26 +100,49 @@ data OpFuncModifier =
     | OpFStock
     | OpFForward
       deriving (Show)
+      
+type FuncModifiers = [FuncModifier]
 
-data OpFuncArgModifier = 
+data FuncArgModifier = 
       OpFAConst
 --    | OpFAIn
 --    | OpFAOut
       deriving (Show)
 
-type FuncArgModifiers = [OpFuncArgModifier]
+type FuncArgModifiers = [FuncArgModifier]
+
+type FuncArg = (FuncArgModifiers, VarType,Text,Maybe ExprAssignment)
+type FuncArgs = [FuncArg]
+
+data VarType = 
+      VT_
+    | VTInt
+    | VTFloat
+    | VTBool
+    | VTString
+    | VTChar
+    | VTArray VarType (Maybe Int)
+    | VTUser Text
+      deriving (Show)
+
+data Type =
+      TVar VarType VarModifiers
+    | TFunc VarType FuncModifiers
+    | TArg VarType FuncArgModifiers
+      deriving (Show)
 
 data Statement = 
       StmtSeq [Statement]
-    | StmtNew VariableModifiers TagDeclaration Text ArrayDeclaration (Maybe ExprAssignment)
-    | StmtDecl VariableModifiers TagDeclaration Text ArrayDeclaration
-    | StmtAss Text ArrayDeclaration ExprAssignment
+    | StmtNew VarModifiers VarType Text (Maybe ExprAssignment)
+    | StmtDecl VarModifiers VarType Text
+    | StmtAss Text ExprAssignment
+    | StmtIndex Text ExprArithmetic ExprAssignment
     | StmtIf ExprBoolean Statement
     | StmtIfElse ExprBoolean Statement Statement
     | StmtWhile ExprBoolean Statement
     | StmtDoWhile ExprBoolean Statement
     | StmtFor Statement ExprBoolean ExprArithmetic Statement
     | StmtReturn ExprAssignment
-    | StmtFunc OpFuncModifier TagDeclaration Text [(FuncArgModifiers,TagDeclaration,Text,Bool,Maybe ExprAssignment)] Statement
+    | StmtFunc FuncModifiers VarType Text FuncArgs Statement
     | StmtFuncCall Text [ExprArithmetic]
       deriving (Show)

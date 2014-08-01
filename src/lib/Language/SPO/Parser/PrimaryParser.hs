@@ -1,11 +1,10 @@
 {-# LANGUAGE RankNTypes #-}
 module Language.SPO.Parser.PrimaryParser 
-    ( whileParser
+    ( runPrimaryParser
     ) where
 
 import Control.Monad
 import Data.Functor.Identity
-import Data.Maybe
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 import Text.Parsec
@@ -16,20 +15,94 @@ import qualified Text.Parsec.Token as Token
 
 import Language.SPO.Parser.Types
 
-type PPState = [M.Map T.Text PrimaryType]
-type PParser = GenParser PPState
-type POperatorTable a = OperatorTable T.Text PPState Identity a
+envKeyGlobal = "_global"
 
-data PrimaryType = 
-      PT_
-    | PTInt
-    | PTFloat
-    | PTBool
-    | PTString
-    | PTChar
-    | PTArray PrimaryType (Maybe Int)
-    | PTUser T.Text
-      deriving (Show)
+runPrimaryParser :: SourceName -> T.Text -> Either ParseError Statement
+runPrimaryParser = 
+    runParser programParser (M.singleton envKeyGlobal M.empty, envKeyGlobal)
+
+type PEnvEntry = (SourcePos, Type)
+type PEnv = M.Map T.Text PEnvEntry
+type PEnvMap = M.Map T.Text PEnv
+
+type PParserState = (PEnvMap,T.Text)
+type PParser = GenParser PParserState
+type POperatorTable a = OperatorTable T.Text PParserState Identity a
+
+fromTagAr :: Maybe (T.Text) -> Maybe (Maybe Int) -> VarType
+fromTagAr t               (Just s) = VTArray (fromTag t) s
+fromTagAr (Just "_")      _        = VT_
+fromTagAr (Just "Float")  _        = VTFloat
+fromTagAr (Just "bool")   _        = VTBool
+fromTagAr (Just "String") _        = VTString
+fromTagAr (Just u)        _        = VTUser u
+fromTagAr _               _        = VTInt
+
+fromTag :: Maybe (T.Text) -> VarType
+fromTag = flip fromTagAr Nothing
+
+eePos :: PEnvEntry -> SourcePos
+eePos = fst
+
+eeType :: PEnvEntry -> Type
+eeType = snd
+
+makeEe :: SourcePos -> Type -> PEnvEntry
+makeEe = (,)
+
+getAllEnvs :: PParser PEnvMap
+getAllEnvs = getState >>= return . fst
+
+getCurrentEnvKey :: PParser T.Text
+getCurrentEnvKey = getState >>= return . snd
+
+isGlobalEnv :: PParser Bool
+isGlobalEnv = getCurrentEnvKey >>= return . (==) envKeyGlobal
+
+getCurrentEnv :: PParser PEnv
+getCurrentEnv = do
+    st <- getState
+    case M.lookup (snd st) (fst st) of
+        Just ce -> return ce
+        _ -> fail "Fatal: There is no state."
+
+modifyCurrentEnv :: (PEnv -> PEnv) -> PParser ()
+modifyCurrentEnv f = modifyState (\(em,cs) -> (M.adjust f cs em, cs))
+
+createNewEnv :: T.Text -> PParser ()
+createNewEnv ek = modifyState (\(em,cs) -> (M.insert ek M.empty em, cs))
+
+switchEnv :: T.Text -> PParser a -> PParser a
+switchEnv ek p = do
+    (pem, pek) <- getState
+    case M.lookup ek pem of
+        Just _ -> do
+            modifyState (\(em,_) -> (em, ek))
+            r <- p
+            modifyState (\(em,_) -> (em, pek))
+            return r
+        _ -> fail "Fatal: switching to unknown environment"
+
+-- Many thanks to Daniel Fischer for this workaround.
+-- http://haskell.1045720.n5.nabble.com/Parsec-Custom-Fail-tp3131949p3131952.html
+setPosAndFail :: SourcePos -> String -> PParser ()
+setPosAndFail pos msg = do 
+    setPosition pos 
+    inp <- getInput 
+    setInput (T.cons 'a' inp) 
+    _ <- tokenPrim (const "") (\p _ _ -> p) Just 
+    fail msg 
+
+forceValidateOrSetIdentifier :: T.Text -> SourcePos -> Type -> PParser ()
+forceValidateOrSetIdentifier var pos t = do
+    cenv <- getCurrentEnv
+    case M.lookup var cenv of
+        Just e -> setPosAndFail pos $ "E: redefining variable found at " ++ show (eePos e)
+        -- putStrLn $ "W: shadowing variable at " ++ show (eePos v)
+        _ -> modifyCurrentEnv (M.insert var (makeEe pos t))
+
+forceGlobalEnv :: SourcePos -> String -> PParser ()
+forceGlobalEnv pos msg = isGlobalEnv >>= \ige -> when (not ige) (setPosAndFail pos msg)
 
 langDef :: forall u. GenLanguageDef T.Text u Identity
 langDef = Token.LanguageDef
@@ -84,8 +157,8 @@ symbol     = Token.symbol     lexer
 integer    :: PParser Integer
 integer    = Token.integer    lexer
 
-semicolon  ::  PParser String
-semicolon  = Token.semi       lexer
+semicolon  :: PParser ()
+semicolon  = Token.semi       lexer >> return ()
 
 whiteSpace :: PParser ()
 whiteSpace = Token.whiteSpace lexer
@@ -100,12 +173,9 @@ braces     = Token.braces     lexer -- {}
 brackets   = Token.brackets   lexer -- []
 
 
--- Primary Parser
-
-whileParser :: PParser Statement
-whileParser = do
+programParser :: PParser Statement
+programParser = do
     whiteSpace
-    modifyState ((:)M.empty)
     stmt <- statement
     eof
     return stmt
@@ -168,7 +238,7 @@ doWhileStmt = do
     stmt <- bracedStmt
     reserved "while"
     cond <- parens exprBoolean
-    _ <- semicolon
+    semicolon
     return $ StmtDoWhile cond stmt
 
 forStmt :: PParser Statement
@@ -177,7 +247,7 @@ forStmt = do
     (ini, cond, it) <- parens $ do
         ini <- newStmt
         cond <- exprBoolean
-        _ <- semicolon
+        semicolon
         it <- exprArithmetic
         return $ (ini, cond, it)
     stmt <- bracedStmt
@@ -190,57 +260,78 @@ assignStmt = do
     reservedOp "="
     expr <- exprAssignment
     _ <- semicolon
-    return $ StmtAss var marr expr
+    case marr of 
+        Just arr -> case arr of 
+            Just exprIdx -> return $ StmtIndex var exprIdx expr
+            _ -> fail "expected index in array assignment"
+        _ -> return $ StmtAss var expr
 
 returnStmt :: PParser Statement
 returnStmt = do
     reserved "return"
     expr <- exprAssignment
-    _ <- semicolon
+    semicolon
     return $ StmtReturn expr
 
 declStmt :: PParser Statement
 declStmt = do 
     reserved "decl"
-    ms <- variableModifiers
+    ms <- varModifiers
     mtag <- tagDeclaration
+    pos <- getPosition
     var <- identifier
-    marr <- arrayDeclaration
-    _ <- semicolon
-    return $ StmtDecl ms mtag var marr
+    marr <- arrayDeclarationResolved
+    semicolon
     
+    let varType = fromTagAr mtag marr
+    forceValidateOrSetIdentifier var pos (TVar varType ms)
+    return $ StmtDecl ms varType var
+
 newStmt :: PParser Statement
 newStmt = do 
     reserved "new"
-    ms <- variableModifiers
+    ms <- varModifiers
     mtag <- tagDeclaration
+    pos <- getPosition
     var <- identifier
-    marr <- arrayDeclaration
+    marr <- arrayDeclarationResolved
     mexpr <- optionMaybe (try (reservedOp "=" >> exprAssignment))
-    _ <- semicolon
-    return $ StmtNew ms mtag var marr mexpr
+    semicolon
+    
+    let varType = fromTagAr mtag marr
+    forceValidateOrSetIdentifier var pos (TVar varType ms)
+    return $ StmtNew ms varType var mexpr
 
 funcStmt :: PParser Statement
 funcStmt = do
-    m <- opFuncModifier
+    ms <- funcModifiers
     mtag <- tagDeclaration
+    pos <- getPosition
     var <- identifier    
     args <- parens $ commaSep $ do
-        ms <- funcArgModifiers
+        ams <- funcArgModifiers
         matag <- tagDeclaration
         arg <- identifier
-        marr <- optionMaybe $ symbol "[" >> symbol "]"
+        marr <- optionMaybe $ symbol "[" >> symbol "]" >> return Nothing
         expr <- optionMaybe $ do
             reservedOp "="
             exprAssignment
-        return $ (ms, matag, arg, isJust marr, expr)
-    stmt <- braces $ statement 
-    return $ StmtFunc m mtag var args stmt
+        return $ (ams, fromTagAr matag marr, arg, expr)
+    
+    createNewEnv var
+    stmt <- switchEnv var $ do
+        braces statement
+    
+    forceGlobalEnv pos "E: defining function outside of global scope"
+    
+    let varType = fromTag mtag
+    forceValidateOrSetIdentifier var pos (TFunc varType ms)    
+    return $ StmtFunc ms varType var args stmt
 
 funcCallStmt :: PParser Statement
 funcCallStmt = do 
     (var,expr) <- funcCallInternal
-    _ <- semicolon
+    semicolon
     return $ StmtFuncCall var expr
 
 funcCallInternal :: PParser (T.Text, [ExprArithmetic])
@@ -249,44 +340,47 @@ funcCallInternal = do
     expr <- parens $ commaSep exprArithmetic
     return $ (var, expr)
 
-opFuncModifier :: PParser OpFuncModifier
-opFuncModifier = do
+funcModifiers :: PParser FuncModifiers
+funcModifiers = do
     ms <- many $ (reserved "native" >> return OpFNative)
              <|> (reserved "public" >> return OpFPublic)
              <|> (reserved "static" >> return OpFStatic)
-             <|> (reserved "stock" >> return OpFStock)
+             <|> (reserved "stock"  >> return OpFStock)
              <|> (reserved "forward" >> return OpFForward)
     if null ms 
-        then return OpFNormal
-        else if length ms > 1 
-            then fail "unpexpected modifier"
-            else return $ head ms
+        then return [OpFNormal]
+        else return ms
 
 funcArgModifiers :: PParser FuncArgModifiers
 funcArgModifiers = many $ (reserved "const" >> return OpFAConst)
 --                      <|> (reserved "in"    >> return OpFAIn)
 --                      <|> (reserved "out"   >> return OpFAOut)
 
-tagDeclaration :: PParser TagDeclaration
+tagDeclaration :: PParser (Maybe T.Text)
 tagDeclaration = optionMaybe $ try $ do
     tag <- identifier <|> liftM T.pack (count 1 (char '_'))
     reservedOp ":"
     return tag
 
-arrayDeclaration :: PParser ArrayDeclaration
+arrayDeclaration :: PParser (Maybe (Maybe ExprArithmetic))
 arrayDeclaration = optionMaybe $ try $ do 
     reservedOp "["
     expr <- optionMaybe (try exprArithmetic)
     reservedOp "]"
     return expr
 
+arrayDeclarationResolved :: PParser (Maybe (Maybe Int))
+arrayDeclarationResolved = do
+    mmexpr <- arrayDeclaration
+    return $ fmap (fmap (const 999)) mmexpr -- TODO resolve expr to a constant
+
 exprAssignment :: PParser ExprAssignment
 exprAssignment = try (liftM ExprAssBool exprBoolean)
              <|> liftM ExprAssAr exprArithmetic
              <|> liftM ExprAssArrayInit (braces (commaSep exprArithmetic))
 
-variableModifiers :: PParser VariableModifiers
-variableModifiers = many $ (reserved "const"  >> return OpConst)
+varModifiers :: PParser VarModifiers
+varModifiers = many $ (reserved "const"  >> return OpConst)
                        <|> (reserved "static" >> return OpStatic)
     
 
