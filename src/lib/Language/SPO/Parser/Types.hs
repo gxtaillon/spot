@@ -9,9 +9,13 @@ module Language.SPO.Parser.Types
     , OpUnaArithmetic (..)
     , ExprAssignment (..)
     
-    -- Statement
+    -- Type
     , VarType (..)
     , Type (..)
+    , isFunc
+    , isVariable
+    
+    -- Statement
     , VarModifier (..)
     , VarModifiers
     , FuncModifier (..)
@@ -24,7 +28,6 @@ module Language.SPO.Parser.Types
     ) where
 
 import Data.Text
-import qualified Data.Map.Strict as M
 
 data ExprBoolean = 
       ExprBool Bool
@@ -130,6 +133,15 @@ data Type =
     | TFunc VarType FuncModifiers
     | TArg VarType FuncArgModifiers
       deriving (Show)
+
+isFunc :: Type -> Bool
+isFunc (TFunc _ _) = True
+isFunc _ = False
+
+isVariable :: Type -> Bool
+isVariable (TVar _ _) = True
+isVariable (TArg _ _) = True
+isVariable _ = False
 
 data Statement = 
       StmtSeq [Statement]

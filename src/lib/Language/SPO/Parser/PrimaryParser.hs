@@ -3,31 +3,36 @@ module Language.SPO.Parser.PrimaryParser
     ( runPrimaryParser
     ) where
 
+-- TODO Get rid of `IO`, carry warnings and informative messages around 
+--      before displaying them.
+
 import Control.Monad
-import Data.Functor.Identity
+import Control.Monad.IO.Class (liftIO)
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 import Text.Parsec
-import Text.Parsec.Text
+import Text.Parsec.Text ()
 import Text.Parsec.Expr
-import Text.Parsec.Language
 import qualified Text.Parsec.Token as Token
 
 import Language.SPO.Parser.Types
 
-envKeyGlobal = "_global"
+scopeKeyGlobal :: T.Text
+scopeKeyGlobal = "_global"
 
-runPrimaryParser :: SourceName -> T.Text -> Either ParseError Statement
+runPrimaryParser :: SourceName -> T.Text -> IO (Either ParseError Statement)
 runPrimaryParser = 
-    runParser programParser (M.singleton envKeyGlobal M.empty, envKeyGlobal)
+    runParserT programParser (M.singleton scopeKeyGlobal M.empty, scopeKeyGlobal)
 
-type PEnvEntry = (SourcePos, Type)
-type PEnv = M.Map T.Text PEnvEntry
-type PEnvMap = M.Map T.Text PEnv
+type PScopeEntry = (SourcePos, Type)
+type PScope = M.Map T.Text PScopeEntry
+type PScopeMap = M.Map T.Text PScope
 
-type PParserState = (PEnvMap,T.Text)
-type PParser = GenParser PParserState
-type POperatorTable a = OperatorTable T.Text PParserState Identity a
+type PParserState = (PScopeMap,T.Text)
+type PParser = ParsecT T.Text PParserState IO
+type POperatorTable a = OperatorTable T.Text PParserState IO a
+type PTokenParser = Token.GenTokenParser T.Text PParserState IO
+type PLanguageDef = Token.GenLanguageDef T.Text PParserState IO
 
 fromTagAr :: Maybe (T.Text) -> Maybe (Maybe Int) -> VarType
 fromTagAr t               (Just s) = VTArray (fromTag t) s
@@ -41,47 +46,66 @@ fromTagAr _               _        = VTInt
 fromTag :: Maybe (T.Text) -> VarType
 fromTag = flip fromTagAr Nothing
 
-eePos :: PEnvEntry -> SourcePos
-eePos = fst
+sePos :: PScopeEntry -> SourcePos
+sePos = fst
 
-eeType :: PEnvEntry -> Type
-eeType = snd
+seType :: PScopeEntry -> Type
+seType = snd
 
-makeEe :: SourcePos -> Type -> PEnvEntry
-makeEe = (,)
+makeSe :: SourcePos -> Type -> PScopeEntry
+makeSe = (,)
 
-getAllEnvs :: PParser PEnvMap
-getAllEnvs = getState >>= return . fst
+--getAllScopes :: PParser PScopeMap
+--getAllScopes = getState >>= return . fst
 
-getCurrentEnvKey :: PParser T.Text
-getCurrentEnvKey = getState >>= return . snd
+getScope :: T.Text -> PParser PScope
+getScope sk = do
+    (sm, _) <- getState
+    case M.lookup sk sm of
+        Just se -> return se
+        _ -> fail $ "Fatal: unknown `" ++ T.unpack sk ++ "` state."
 
-isGlobalEnv :: PParser Bool
-isGlobalEnv = getCurrentEnvKey >>= return . (==) envKeyGlobal
+getCurrentScopeKey :: PParser T.Text
+getCurrentScopeKey = getState >>= return . snd
 
-getCurrentEnv :: PParser PEnv
-getCurrentEnv = do
-    st <- getState
-    case M.lookup (snd st) (fst st) of
-        Just ce -> return ce
-        _ -> fail "Fatal: There is no state."
+getCurrentScope :: PParser PScope
+getCurrentScope = getCurrentScopeKey >>= getScope
 
-modifyCurrentEnv :: (PEnv -> PEnv) -> PParser ()
-modifyCurrentEnv f = modifyState (\(em,cs) -> (M.adjust f cs em, cs))
+getGlobalScope :: PParser PScope
+getGlobalScope = getScope scopeKeyGlobal
 
-createNewEnv :: T.Text -> PParser ()
-createNewEnv ek = modifyState (\(em,cs) -> (M.insert ek M.empty em, cs))
+isGlobalScope :: PParser Bool
+isGlobalScope = getCurrentScopeKey >>= return . (==) scopeKeyGlobal
 
-switchEnv :: T.Text -> PParser a -> PParser a
-switchEnv ek p = do
-    (pem, pek) <- getState
-    case M.lookup ek pem of
+modifyCurrentScope :: (PScope -> PScope) -> PParser ()
+modifyCurrentScope f = modifyState (\(sm,cs) -> (M.adjust f cs sm, cs))
+
+createNewScope :: T.Text -> PParser ()
+createNewScope sk = modifyState (\(sm,cs) -> (M.insert sk M.empty sm, cs))
+
+switchScope :: T.Text -> PParser a -> PParser a
+switchScope sk p = do
+    (psm, psk) <- getState
+    case M.lookup sk psm of
         Just _ -> do
-            modifyState (\(em,_) -> (em, ek))
+            modifyState (\(sm,_) -> (sm, sk))
             r <- p
-            modifyState (\(em,_) -> (em, pek))
+            modifyState (\(sm,_) -> (sm, psk))
             return r
-        _ -> fail "Fatal: switching to unknown environment"
+        _ -> fail "Fatal: switching to unknown scope"
+
+lookupCurrentAndGlobal :: T.Text -> PParser (Maybe (T.Text, PScopeEntry))
+lookupCurrentAndGlobal var = do
+    cs <- getCurrentScope
+    csk <- getCurrentScopeKey
+    case M.lookup var cs of
+        Just se -> return $ Just (csk, se)
+        _ -> do
+            gs <- getGlobalScope
+            case M.lookup var gs of
+                Just gse -> return $ Just (scopeKeyGlobal, gse)
+                _ -> return $ Nothing
+    
 
 -- Many thanks to Daniel Fischer for this workaround.
 -- http://haskell.1045720.n5.nabble.com/Parsec-Custom-Fail-tp3131949p3131952.html
@@ -93,18 +117,33 @@ setPosAndFail pos msg = do
     _ <- tokenPrim (const "") (\p _ _ -> p) Just 
     fail msg 
 
+forceGlobalScope :: SourcePos -> String -> PParser ()
+forceGlobalScope pos msg = do
+    igs <- isGlobalScope
+    when (not igs) $ do
+        setPosAndFail pos msg
+
 forceValidateOrSetIdentifier :: T.Text -> SourcePos -> Type -> PParser ()
 forceValidateOrSetIdentifier var pos t = do
-    cenv <- getCurrentEnv
-    case M.lookup var cenv of
-        Just e -> setPosAndFail pos $ "E: redefining variable found at " ++ show (eePos e)
-        -- putStrLn $ "W: shadowing variable at " ++ show (eePos v)
-        _ -> modifyCurrentEnv (M.insert var (makeEe pos t))
+    csk <- getCurrentScopeKey
+    mvi <- lookupCurrentAndGlobal var
+    case mvi of
+        Just (sk, se) | sk == csk -> setPosAndFail pos $ 
+            "E: redefining variable found at " ++ show (sePos se)
+                      | otherwise -> liftIO $ putStrLn $
+            show pos ++ ":\n" ++
+            "W: `"++ T.unpack var ++"` is shadowing another variable from " ++ show (sePos se)
+        _ -> modifyCurrentScope (M.insert var (makeSe pos t))
 
-forceGlobalEnv :: SourcePos -> String -> PParser ()
-forceGlobalEnv pos msg = isGlobalEnv >>= \ige -> when (not ige) (setPosAndFail pos msg)
+forceDefined :: SourcePos -> T.Text -> (Type -> Bool) -> String -> PParser ()
+forceDefined pos var f msg = do
+    mvi <- lookupCurrentAndGlobal var
+    case mvi of
+        Just (_, se) -> when (not $ f (seType se)) $ do
+            setPosAndFail pos msg 
+        _ -> setPosAndFail pos msg
 
-langDef :: forall u. GenLanguageDef T.Text u Identity
+langDef :: PLanguageDef
 langDef = Token.LanguageDef
     { Token.commentStart    = "/*"
     , Token.commentEnd      = "*/"
@@ -133,38 +172,38 @@ langDef = Token.LanguageDef
     , Token.caseSensitive   = True
     }
 
-lexer :: forall u. Token.GenTokenParser T.Text u Identity
+lexer :: PTokenParser
 lexer = Token.makeTokenParser langDef
 
-identifier :: PParser T.Text
-identifier = Token.identifier lexer >>= return . T.pack
+identifier      :: PParser T.Text
+identifier      = Token.identifier lexer >>= return . T.pack
 
-reserved   :: String -> PParser ()
-reserved   = Token.reserved   lexer
+reserved        :: String -> PParser ()
+reserved        = Token.reserved   lexer
 
-reservedOp :: String -> PParser ()
-reservedOp = Token.reservedOp lexer
+reservedOp      :: String -> PParser ()
+reservedOp      = Token.reservedOp lexer
 
-charLiteral   :: PParser Char
-charLiteral   = Token.charLiteral lexer
+charLiteral     :: PParser Char
+charLiteral     = Token.charLiteral lexer
 
-stringLiteral :: PParser T.Text
-stringLiteral = Token.stringLiteral lexer >>= return . T.pack
+stringLiteral   :: PParser T.Text
+stringLiteral   = Token.stringLiteral lexer >>= return . T.pack
 
-symbol     :: String -> PParser String
-symbol     = Token.symbol     lexer
+symbol          :: String -> PParser String
+symbol          = Token.symbol     lexer
 
-integer    :: PParser Integer
-integer    = Token.integer    lexer
+integer         :: PParser Integer
+integer         = Token.integer    lexer
 
-semicolon  :: PParser ()
-semicolon  = Token.semi       lexer >> return ()
+semicolon       :: PParser ()
+semicolon       = Token.semi       lexer >> return ()
 
-whiteSpace :: PParser ()
-whiteSpace = Token.whiteSpace lexer
+whiteSpace      :: PParser ()
+whiteSpace      = Token.whiteSpace lexer
 
-commaSep   :: PParser a -> PParser [a]
-commaSep   = Token.commaSep   lexer
+commaSep        :: PParser a -> PParser [a]
+commaSep        = Token.commaSep   lexer
 
 parens, braces ,{- angles,  -} brackets :: forall a. PParser a -> PParser a
 parens     = Token.parens     lexer -- ()
@@ -190,17 +229,18 @@ statements = do
     return $ if length list == 1 then head list else StmtSeq list
 
 statement' :: PParser Statement
-statement' = try ifElseStmt
-         <|> try funcStmt
-         <|> forStmt
+statement' = funcStmt
          <|> funcCallStmt
          <|> returnStmt
+         <|> ifElseStmt
          <|> ifStmt
          <|> whileStmt
          <|> doWhileStmt
          <|> declStmt
+         <|> forStmt
          <|> newStmt
          <|> assignStmt
+
 
 bracedStmt :: PParser Statement
 bracedStmt = (try $ statement') 
@@ -221,7 +261,7 @@ ifStmt = do
 ifElseStmt :: PParser Statement
 ifElseStmt = do 
     (cond, stmt1) <- ifStmt'
-    reserved "else"
+    try $ reserved "else"
     stmt2 <- bracedStmt
     return $ StmtIfElse cond stmt1 stmt2
     
@@ -304,25 +344,27 @@ newStmt = do
 
 funcStmt :: PParser Statement
 funcStmt = do
-    ms <- funcModifiers
-    mtag <- tagDeclaration
-    pos <- getPosition
-    var <- identifier    
-    args <- parens $ commaSep $ do
-        ams <- funcArgModifiers
-        matag <- tagDeclaration
-        arg <- identifier
-        marr <- optionMaybe $ symbol "[" >> symbol "]" >> return Nothing
-        expr <- optionMaybe $ do
-            reservedOp "="
-            exprAssignment
-        return $ (ams, fromTagAr matag marr, arg, expr)
-    
-    createNewEnv var
-    stmt <- switchEnv var $ do
-        braces statement
-    
-    forceGlobalEnv pos "E: defining function outside of global scope"
+    (ms, mtag, var, args, stmt, pos) <- try $ do
+        ms <- funcModifiers
+        mtag <- tagDeclaration
+        pos <- getPosition
+        var <- identifier
+        args <- parens $ commaSep $ do
+            ams <- funcArgModifiers
+            matag <- tagDeclaration
+            arg <- identifier
+            marr <- optionMaybe $ symbol "[]" >> return Nothing
+            expr <- optionMaybe $ do
+                reservedOp "="
+                exprAssignment
+            return $ (ams, fromTagAr matag marr, arg, expr)
+        
+        createNewScope var
+        stmt <- switchScope var $ do
+            braces statement
+        return $ (ms, mtag, var, args, stmt, pos)
+        
+    forceGlobalScope pos "E: defining function outside of global scope"
     
     let varType = fromTag mtag
     forceValidateOrSetIdentifier var pos (TFunc varType ms)    
@@ -336,8 +378,12 @@ funcCallStmt = do
 
 funcCallInternal :: PParser (T.Text, [ExprArithmetic])
 funcCallInternal = do
-    var <- identifier
-    expr <- parens $ commaSep exprArithmetic
+    pos <- getPosition
+    (var, expr) <- try $ do
+        var <- identifier
+        expr <- parens $ commaSep exprArithmetic
+        return $ (var, expr)
+    forceDefined pos var isFunc "E: expected function"
     return $ (var, expr)
 
 funcModifiers :: PParser FuncModifiers
@@ -417,15 +463,20 @@ opArithmetic =
 
 termArithmetic :: PParser ExprArithmetic
 termArithmetic = parens exprArithmetic
-             <|> try (do var <- identifier
-                         expr <- brackets exprArithmetic
-                         return $ ExprIndex var expr)
-             <|> try (do (var,expr) <- funcCallInternal
-                         return $ ExprFuncCall var expr)
-             <|> liftM ExprVar identifier
-             <|> liftM ExprInt integer
-             <|> liftM ExprChar charLiteral
-             <|> liftM ExprString stringLiteral
+             <|> do pos <- getPosition
+                    -- `try` is here to display `forceDefined` errors
+                    (var, expr) <- try $ do
+                        var <- identifier
+                        expr <- brackets exprArithmetic
+                        return $ (var, expr)
+                    forceDefined pos var isVariable "E: not using a variable"
+                    return $ ExprIndex var expr
+             <|> do (var, expr) <- funcCallInternal
+                    return $ ExprFuncCall var expr
+             <|> liftM ExprVar (try identifier)
+             <|> liftM ExprInt (try integer)
+             <|> liftM ExprChar (try charLiteral)
+             <|> liftM ExprString (try stringLiteral)
 
 termBoolean :: PParser ExprBoolean
 termBoolean = parens exprBoolean
