@@ -1,4 +1,4 @@
-#if defined _SPO_Inc_OO
+#ifdef _SPO_Inc_OO
     #endinput
 #endif
 #define _SPO_Inc_OO
@@ -16,7 +16,8 @@ _SPO_iGet_Safe(from, this, iTable[][]) {
 
 #define _SPO_Conf_iGet_Safe         1           // safe:1 unsafe:0
 
-#if !defined _SPO_iTable_Var
+#ifdef _SPO_iTable_Var
+#else
     #define _SPO_iTable_Var         _SPO_iTable
 #endif
 

@@ -6,8 +6,10 @@ module Language.SPO.Parser.PrimaryParser
 -- TODO Get rid of `IO`, carry warnings and informative messages around 
 --      before displaying them.
 
+import Control.Applicative ((<$>), (<*>))
 import Control.Monad
 import Control.Monad.IO.Class (liftIO)
+import Data.Bits ((.&.), (.|.), xor, complement, shiftL, shiftR)
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 import Text.Parsec
@@ -24,15 +26,18 @@ runPrimaryParser :: SourceName -> T.Text -> IO (Either ParseError Statement)
 runPrimaryParser = 
     runParserT programParser (M.singleton scopeKeyGlobal M.empty, scopeKeyGlobal)
 
-type PScopeEntry = (SourcePos, Type)
+type PScopeEntry = (SourcePos, Type, Maybe ExprAssignment)
 type PScope = M.Map T.Text PScopeEntry
 type PScopeMap = M.Map T.Text PScope
 
-type PParserState = (PScopeMap,T.Text)
+type PParserState = (PScopeMap, T.Text)
 type PParser = ParsecT T.Text PParserState IO
 type POperatorTable a = OperatorTable T.Text PParserState IO a
 type PTokenParser = Token.GenTokenParser T.Text PParserState IO
 type PLanguageDef = Token.GenLanguageDef T.Text PParserState IO
+
+
+type ArrayDeclarationInternal = (Maybe (Maybe ExprArithmetic))
 
 fromTagAr :: Maybe (T.Text) -> Maybe (Maybe Int) -> VarType
 fromTagAr t               (Just s) = VTArray (fromTag t) s
@@ -46,14 +51,17 @@ fromTagAr _               _        = VTInt
 fromTag :: Maybe (T.Text) -> VarType
 fromTag = flip fromTagAr Nothing
 
-sePos :: PScopeEntry -> SourcePos
-sePos = fst
+sePos  :: PScopeEntry -> SourcePos
+sePos  (p,_,_) = p
 
 seType :: PScopeEntry -> Type
-seType = snd
+seType (_,t,_) = t
 
-makeSe :: SourcePos -> Type -> PScopeEntry
-makeSe = (,)
+seAss  :: PScopeEntry -> Maybe ExprAssignment
+seAss  (_,_,a) = a
+
+makeSe :: SourcePos -> Type -> Maybe ExprAssignment -> PScopeEntry
+makeSe p t a   = (p,t,a)
 
 --getAllScopes :: PParser PScopeMap
 --getAllScopes = getState >>= return . fst
@@ -115,25 +123,29 @@ setPosAndFail pos msg = do
     inp <- getInput 
     setInput (T.cons 'a' inp) 
     _ <- tokenPrim (const "") (\p _ _ -> p) Just 
-    fail msg 
+    fail msg
+
+putWarnLn :: SourcePos -> String -> PParser ()
+putWarnLn pos msg = liftIO $ putStrLn $ show pos ++ ":\n" ++ msg
 
 forceGlobalScope :: SourcePos -> String -> PParser ()
 forceGlobalScope pos msg = do
     igs <- isGlobalScope
     when (not igs) $ do
-        setPosAndFail pos msg
+        setPosAndFail pos msg 
 
-forceValidateOrSetIdentifier :: T.Text -> SourcePos -> Type -> PParser ()
-forceValidateOrSetIdentifier var pos t = do
+forceValidateOrSetIdentifier 
+    :: T.Text -> SourcePos -> Type -> Maybe ExprAssignment -> PParser ()
+forceValidateOrSetIdentifier var pos t ass = do
     csk <- getCurrentScopeKey
     mvi <- lookupCurrentAndGlobal var
     case mvi of
         Just (sk, se) | sk == csk -> setPosAndFail pos $ 
             "E: redefining variable found at " ++ show (sePos se)
-                      | otherwise -> liftIO $ putStrLn $
-            show pos ++ ":\n" ++
-            "W: `"++ T.unpack var ++"` is shadowing another variable from " ++ show (sePos se)
-        _ -> modifyCurrentScope (M.insert var (makeSe pos t))
+                      | otherwise -> putWarnLn pos $
+            "W: `"++ T.unpack var ++"` is shadowing another variable from " ++ 
+            show (sePos se)
+        _ -> modifyCurrentScope (M.insert var (makeSe pos t ass))
 
 forceDefined :: SourcePos -> T.Text -> (Type -> Bool) -> String -> PParser ()
 forceDefined pos var f msg = do
@@ -142,6 +154,74 @@ forceDefined pos var f msg = do
         Just (_, se) -> when (not $ f (seType se)) $ do
             setPosAndFail pos msg 
         _ -> setPosAndFail pos msg
+
+forceSetConstantArrayDeclaration
+    :: VarModifiers 
+    -> T.Text 
+    -> SourcePos 
+    -> Maybe T.Text 
+    -> Maybe ExprArithmetic 
+    -> Maybe ExprAssignment 
+    -> PParser ()
+forceSetConstantArrayDeclaration ms var pos mtag marr mass = case marr of
+    Just mexpr -> case evalIntConstExprArithmetic mexpr of
+        Just size -> do
+            when (size < 1) $
+                setPosAndFail pos "E: array declared size is less than 1"
+            case mass of
+                Just ass -> case ass of
+                    ExprAssArrayInit exprs -> do
+                        when (length exprs > size) $
+                            setPosAndFail pos "E: array initializer size is bigger than declared size"
+                        when (length exprs < size) $ 
+                            putWarnLn pos "W: array declared size and initializer size differ"
+                        let varType = fromTagAr mtag (Just $ Just size)
+                        forceValidateOrSetIdentifier var pos (TVar varType ms) mass
+                    _ -> setPosAndFail pos "E: expected array initializer"
+                _ -> do
+                    let varType = fromTagAr mtag (Just $ Just size)
+                    forceValidateOrSetIdentifier var pos (TVar varType ms) Nothing
+        _ -> setPosAndFail pos "E: expected constant expression in array declaration"
+    _ -> case mass of
+        Just ass -> case ass of
+            ExprAssArrayInit exprs -> do
+                let varType = fromTagAr mtag (Just $ Just $ length exprs)
+                forceValidateOrSetIdentifier var pos (TVar varType ms) mass
+            _ -> setPosAndFail pos "E: expected array initializer"
+        _ -> setPosAndFail pos "E: expected array size declaration"
+
+forceSetVariable 
+    :: VarModifiers
+    -> T.Text
+    -> SourcePos
+    -> Maybe T.Text
+    -> Maybe (Maybe ExprArithmetic)
+    -> Maybe ExprAssignment
+    -> PParser VarType
+forceSetVariable ms var pos mtag marr mexpr = case marr of
+    Just arr -> do
+        forceSetConstantArrayDeclaration ms var pos mtag arr mexpr
+        (Just (_, se)) <- lookupCurrentAndGlobal var
+        let (TVar varType _) = seType se
+        return varType
+    _ -> return $ fromTagAr mtag Nothing
+
+evalIntConstExprArithmetic :: ExprArithmetic -> Maybe Int
+evalIntConstExprArithmetic (ExprInt i) = Just (fromIntegral i)
+evalIntConstExprArithmetic (ExprBinAr op expr1 expr2) = 
+    (intFromOpBinArithmetic op) <$> evalIntConstExprArithmetic expr1  <*> evalIntConstExprArithmetic expr2
+evalIntConstExprArithmetic _ = Nothing
+
+intFromOpBinArithmetic :: OpBinArithmetic -> (Int -> Int -> Int)
+intFromOpBinArithmetic OpAdd     = (+)
+intFromOpBinArithmetic OpSub     = (-)
+intFromOpBinArithmetic OpMul     = (*)
+intFromOpBinArithmetic OpDiv     = div
+intFromOpBinArithmetic OpBAnd    = (.&.)
+intFromOpBinArithmetic OpBOr     = (.|.)
+intFromOpBinArithmetic OpBXor    = xor
+intFromOpBinArithmetic OpBLShift = shiftL
+intFromOpBinArithmetic OpBRShift = shiftR
 
 langDef :: PLanguageDef
 langDef = Token.LanguageDef
@@ -236,9 +316,9 @@ statement' = funcStmt
          <|> ifStmt
          <|> whileStmt
          <|> doWhileStmt
-         <|> declStmt
          <|> forStmt
          <|> newStmt
+         <|> declStmt
          <|> assignStmt
 
 
@@ -320,11 +400,11 @@ declStmt = do
     mtag <- tagDeclaration
     pos <- getPosition
     var <- identifier
-    marr <- arrayDeclarationResolved
+    marr <- arrayDeclaration
     semicolon
     
-    let varType = fromTagAr mtag marr
-    forceValidateOrSetIdentifier var pos (TVar varType ms)
+    
+    varType <- forceSetVariable ms var pos mtag marr Nothing
     return $ StmtDecl ms varType var
 
 newStmt :: PParser Statement
@@ -334,12 +414,11 @@ newStmt = do
     mtag <- tagDeclaration
     pos <- getPosition
     var <- identifier
-    marr <- arrayDeclarationResolved
+    marr <- arrayDeclaration
     mexpr <- optionMaybe (try (reservedOp "=" >> exprAssignment))
     semicolon
     
-    let varType = fromTagAr mtag marr
-    forceValidateOrSetIdentifier var pos (TVar varType ms)
+    varType <- forceSetVariable ms var pos mtag marr mexpr
     return $ StmtNew ms varType var mexpr
 
 funcStmt :: PParser Statement
@@ -367,7 +446,7 @@ funcStmt = do
     forceGlobalScope pos "E: defining function outside of global scope"
     
     let varType = fromTag mtag
-    forceValidateOrSetIdentifier var pos (TFunc varType ms)    
+    forceValidateOrSetIdentifier var pos (TFunc varType ms) Nothing
     return $ StmtFunc ms varType var args stmt
 
 funcCallStmt :: PParser Statement
@@ -383,22 +462,22 @@ funcCallInternal = do
         var <- identifier
         expr <- parens $ commaSep exprArithmetic
         return $ (var, expr)
-    forceDefined pos var isFunc "E: expected function"
+    forceDefined pos var isFunc "E: unknown function"
     return $ (var, expr)
 
 funcModifiers :: PParser FuncModifiers
 funcModifiers = do
-    ms <- many $ (reserved "native" >> return OpFNative)
-             <|> (reserved "public" >> return OpFPublic)
-             <|> (reserved "static" >> return OpFStatic)
-             <|> (reserved "stock"  >> return OpFStock)
-             <|> (reserved "forward" >> return OpFForward)
+    ms <- many $ (reserved "native" >> return MFNative)
+             <|> (reserved "public" >> return MFPublic)
+             <|> (reserved "static" >> return MFStatic)
+             <|> (reserved "stock"  >> return MFStock)
+             <|> (reserved "forward" >> return MFForward)
     if null ms 
-        then return [OpFNormal]
+        then return [MFNormal]
         else return ms
 
 funcArgModifiers :: PParser FuncArgModifiers
-funcArgModifiers = many $ (reserved "const" >> return OpFAConst)
+funcArgModifiers = many $ (reserved "const" >> return MFAConst)
 --                      <|> (reserved "in"    >> return OpFAIn)
 --                      <|> (reserved "out"   >> return OpFAOut)
 
@@ -408,17 +487,12 @@ tagDeclaration = optionMaybe $ try $ do
     reservedOp ":"
     return tag
 
-arrayDeclaration :: PParser (Maybe (Maybe ExprArithmetic))
+arrayDeclaration :: PParser ArrayDeclarationInternal
 arrayDeclaration = optionMaybe $ try $ do 
     reservedOp "["
     expr <- optionMaybe (try exprArithmetic)
     reservedOp "]"
     return expr
-
-arrayDeclarationResolved :: PParser (Maybe (Maybe Int))
-arrayDeclarationResolved = do
-    mmexpr <- arrayDeclaration
-    return $ fmap (fmap (const 999)) mmexpr -- TODO resolve expr to a constant
 
 exprAssignment :: PParser ExprAssignment
 exprAssignment = try (liftM ExprAssBool exprBoolean)
@@ -426,8 +500,8 @@ exprAssignment = try (liftM ExprAssBool exprBoolean)
              <|> liftM ExprAssArrayInit (braces (commaSep exprArithmetic))
 
 varModifiers :: PParser VarModifiers
-varModifiers = many $ (reserved "const"  >> return OpConst)
-                       <|> (reserved "static" >> return OpStatic)
+varModifiers = many $ (reserved "const"  >> return MVConst)
+                       <|> (reserved "static" >> return MVStatic)
     
 
 exprBoolean :: PParser ExprBoolean

@@ -1,5 +1,5 @@
-#include "../core/memory.sp"
-#include "../core/oo.sp"
+#include "core/memory.sp"
+#include "core/oo.sp"
 
 #pragma semicolon 1
 

@@ -72,7 +72,7 @@
           as it more likely that Alloc will be able to complete the request 
           using isolated frames in the heap.
 */
-#if defined _SPO_Inc_Memory
+#ifdef _SPO_Inc_Memory
     #endinput
 #endif
 #define _SPO_Inc_Memory

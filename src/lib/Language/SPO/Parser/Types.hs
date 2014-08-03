@@ -13,6 +13,7 @@ module Language.SPO.Parser.Types
     , VarType (..)
     , Type (..)
     , isFunc
+    , isConstVar
     , isVariable
     
     -- Statement
@@ -55,10 +56,10 @@ data ExprArithmetic =
     | ExprInt Integer
     | ExprChar Char
     | ExprString Text
-    | ExprUnaAr OpUnaArithmetic ExprArithmetic
-    | ExprBinAr OpBinArithmetic ExprArithmetic ExprArithmetic
     | ExprIndex Text ExprArithmetic
     | ExprFuncCall Text [ExprArithmetic]
+    | ExprUnaAr OpUnaArithmetic ExprArithmetic
+    | ExprBinAr OpBinArithmetic ExprArithmetic ExprArithmetic
       deriving (Show)
 
 data OpUnaArithmetic =
@@ -89,28 +90,28 @@ data ExprAssignment =
       deriving (Show)
 
 data VarModifier = 
-      OpConst
-    | OpStatic
-      deriving (Show)
+      MVConst
+    | MVStatic
+      deriving (Show, Eq)
 
 type VarModifiers = [VarModifier]
 
 data FuncModifier =
-      OpFNative
-    | OpFPublic
-    | OpFNormal
-    | OpFStatic
-    | OpFStock
-    | OpFForward
-      deriving (Show)
+      MFNative
+    | MFPublic
+    | MFNormal
+    | MFStatic
+    | MFStock
+    | MFForward
+      deriving (Show, Eq)
       
 type FuncModifiers = [FuncModifier]
 
 data FuncArgModifier = 
-      OpFAConst
+      MFAConst
 --    | OpFAIn
 --    | OpFAOut
-      deriving (Show)
+      deriving (Show, Eq)
 
 type FuncArgModifiers = [FuncArgModifier]
 
@@ -137,6 +138,10 @@ data Type =
 isFunc :: Type -> Bool
 isFunc (TFunc _ _) = True
 isFunc _ = False
+
+isConstVar :: Type -> Bool
+isConstVar (TVar _ ms) = elem MVConst ms
+isConstVar _ = False
 
 isVariable :: Type -> Bool
 isVariable (TVar _ _) = True

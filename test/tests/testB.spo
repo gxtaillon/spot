@@ -1,2 +1,2 @@
-new arr[] = {1,2,3};
+new arr[3+54] = {1,2,3};
 new b = -arr[arr[1]]+2;
