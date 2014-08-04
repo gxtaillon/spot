@@ -53,11 +53,10 @@ public OnPluginStart() { new String:myVar[] = "Hello World!"; }
 ```
 we get :
 ```Haskell
-StmtFunc OpFPublic Nothing "OnPluginStart" [] (StmtNew [] (VTArray VTString (Just 12)) (Just (ExprString "Hello World!")))
+StmtFunc [MFPublic] VTInt "OnPluginStart" [] (StmtNew [] (VTArray VTChar (Just 12)) "myVar" (Just (ExprAssAr (ExprString "Hello World!"))))
 ```
 
 
 Notes
 -----
 1. <a name="note1"></a>SPO programs are bundled and compiled with their own [static memory manager](test/spo/core/memory.sp). This means that their coresponding SMX files will be sensibly larger than one would expect.
-
