@@ -49,7 +49,9 @@ cabal run spot -- path/to/file command
 ```
    The only available command as of `v0.0` is `Show` which runs the parser on the given file and then either displays the `Statement` tree or an error message. For instance, using the input :
 ```SourcePawn
-public OnPluginStart() { new String:myVar[] = "Hello World!"; }
+public OnPluginStart() { 
+    new Char:myVar[] = "Hello World!"; 
+}
 ```
 we get :
 ```Haskell
