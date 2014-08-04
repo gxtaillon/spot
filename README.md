@@ -24,13 +24,15 @@ From Object to Pawn
 
 Interpreter
 -----------
-Using the parser and compiler as a base, a simple interpreter could be created. This would allow scripts to be tested without the burden of running them through a Source server. Calls to native functions would need to be ignored for simplicity's sake but, stubs could be written to show proper execution. 
+Using the parser and compiler as a base, a simple interpreter could be created. This would allow scripts to be tested without the burden of running them through a Source server. Calls to native functions would need to be ignored for simplicity's sake but, stubs could be written to allow proper execution and show how they were called. 
 
 Main Features (planned)
 -----------------------
 * Backward compatibility with SourcePawn 1.6 and earlier
-* `Class`es
-* `Interface`s
+* Advanced error and warning messages.
+* Pointers
+* True `struct`ures
+* Syntaxic sugar
 * Polymorphism
 
 Development
@@ -47,11 +49,11 @@ cabal run spot -- path/to/file command
 ```
    The only available command as of `v0.0` is `Show` which runs the parser on the given file and then either displays the `Statement` tree or an error message. For instance, using the input :
 ```SourcePawn
-public OnPluginStart() { PrintToServer("Hello World!"); }
+public OnPluginStart() { new String:myVar[] = "Hello World!"; }
 ```
 we get :
 ```Haskell
-StmtFunc OpFPublic Nothing "OnPluginStart" [] (StmtFuncCall "PrintToServer" [ExprString "Hello World!"])
+StmtFunc OpFPublic Nothing "OnPluginStart" [] (StmtNew [] (VTArray VTString (Just 12)) (Just (ExprString "Hello World!")))
 ```
 
 
