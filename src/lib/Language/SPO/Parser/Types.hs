@@ -123,7 +123,6 @@ data VarType =
     | VTInt
     | VTFloat
     | VTBool
-    | VTString
     | VTChar
     | VTArray VarType (Maybe Int)
     | VTUser Text

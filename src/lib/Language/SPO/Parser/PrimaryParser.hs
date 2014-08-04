@@ -43,8 +43,8 @@ fromTagAr :: Maybe (T.Text) -> Maybe (Maybe Int) -> VarType
 fromTagAr t               (Just s) = VTArray (fromTag t) s
 fromTagAr (Just "_")      _        = VT_
 fromTagAr (Just "Float")  _        = VTFloat
-fromTagAr (Just "bool")   _        = VTBool
-fromTagAr (Just "String") _        = VTString
+fromTagAr (Just "Bool")   _        = VTBool
+fromTagAr (Just "Char")   _        = VTChar
 fromTagAr (Just u)        _        = VTUser u
 fromTagAr _               _        = VTInt
 
@@ -168,26 +168,34 @@ forceSetConstantArrayDeclaration ms var pos mtag marr mass = case marr of
         Just size -> do
             when (size < 1) $
                 setPosAndFail pos "E: array declared size is less than 1"
+            let varType = fromTagAr mtag (Just $ Just size)
+                typ = TVar varType ms
             case mass of
-                Just ass -> case ass of
-                    ExprAssArrayInit exprs -> do
-                        when (length exprs > size) $
-                            setPosAndFail pos "E: array initializer size is bigger than declared size"
-                        when (length exprs < size) $ 
-                            putWarnLn pos "W: array declared size and initializer size differ"
-                        let varType = fromTagAr mtag (Just $ Just size)
-                        forceValidateOrSetIdentifier var pos (TVar varType ms) mass
-                    _ -> setPosAndFail pos "E: expected array initializer"
-                _ -> do
-                    let varType = fromTagAr mtag (Just $ Just size)
-                    forceValidateOrSetIdentifier var pos (TVar varType ms) Nothing
-        _ -> setPosAndFail pos "E: expected constant expression in array declaration"
+                Just ass -> do
+                    exprSize <- case ass of
+                        ExprAssArrayInit exprs -> return $ length exprs
+                        ExprAssAr (ExprString str) -> return $ T.length str
+                        _ -> setPosAndFail pos "E: expected array initializer" 
+                            >> return 0
+                    when (exprSize > size) $
+                        setPosAndFail pos ("E: array initializer size is " ++
+                                           "bigger than declared size")
+                    when (exprSize < size) $ 
+                        putWarnLn pos ("W: array initializer size is " ++
+                                       "smaller than declared size")
+                    forceValidateOrSetIdentifier var pos typ mass
+                _ -> forceValidateOrSetIdentifier var pos typ Nothing
+        _ -> setPosAndFail pos ("E: expected constant expression in " ++
+                                "array declaration")
     _ -> case mass of
-        Just ass -> case ass of
-            ExprAssArrayInit exprs -> do
-                let varType = fromTagAr mtag (Just $ Just $ length exprs)
-                forceValidateOrSetIdentifier var pos (TVar varType ms) mass
-            _ -> setPosAndFail pos "E: expected array initializer"
+        Just ass -> do
+            exprSize <- case ass of
+                ExprAssArrayInit exprs -> return $ length exprs
+                ExprAssAr (ExprString str) -> return $ T.length str
+                _ -> setPosAndFail pos "E: expected array initializer" 
+                    >> return 0
+            let varType = fromTagAr mtag (Just $ Just $ exprSize)
+            forceValidateOrSetIdentifier var pos (TVar varType ms) mass
         _ -> setPosAndFail pos "E: expected array size declaration"
 
 forceSetVariable 

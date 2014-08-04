@@ -1,4 +1,3 @@
-#include <sourcemod>
 public OnPluginStart() {
-    PrintToServer("Hello World!");
+    new Char:myVar[] = "Hello World!";
 }
