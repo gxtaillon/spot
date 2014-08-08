@@ -21,7 +21,7 @@ flag debug
     default:         False
 
 library
-    extensions:      OverloadedStrings
+    extensions:      OverloadedStrings, CPP
     hs-Source-Dirs:  src/lib
     exposed-modules: Language.SPO
                      Language.SPO.Parser
@@ -31,9 +31,10 @@ library
 --                     Language.SPO.Translators.Translator
 --                     Language.SPO.Translators.SourcePawn
     if flag(debug)
-        ghc-options: -Wall -fforce-recomp
-    else
         ghc-options: -Wall
+        cpp-options: -DDebugEnabled
+    else
+        ghc-options: -Wall -O2
     build-depends:   base     >= 4.6  && < 5
                    , parsec
                    , text

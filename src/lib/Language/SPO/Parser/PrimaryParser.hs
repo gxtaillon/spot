@@ -3,8 +3,15 @@ module Language.SPO.Parser.PrimaryParser
     ( runPrimaryParser
     ) where
 
--- TODO Get rid of `IO`, carry warnings and informative messages around 
+-- TODO Get rid of `IO`, carry warnings and other messages around 
 --      before displaying them.
+
+-- NB   Warnings are shown for code that should be modified but will compile
+--      Errors, for code that will not compile
+--      Fatal errors, for internal cases that can not or have not be made
+--       impossible by the type system. For any given input they should never
+--       appear to the user. A Fatal indicates that something inside the
+--       compiler is not behaving correctly.
 
 import Control.Applicative ((<$>), (<*>))
 import Control.Monad
@@ -23,14 +30,26 @@ scopeKeyGlobal :: T.Text
 scopeKeyGlobal = "_global"
 
 runPrimaryParser :: SourceName -> T.Text -> IO (Either ParseError Statement)
-runPrimaryParser = 
-    runParserT programParser (M.singleton scopeKeyGlobal M.empty, scopeKeyGlobal)
+runPrimaryParser = runParserT programParser st
+    where st = PParserState 
+                    { psScopes = M.singleton scopeKeyGlobal M.empty
+                    , psCurrent = scopeKeyGlobal
+                    }
 
-type PScopeEntry = (SourcePos, Type, Maybe ExprAssignment)
+data PScopeEntry = PScopeEntry 
+    { sePos :: SourcePos
+    , seType :: Type
+    , _seAss :: Maybe ExprAssignment -- underscore to get rid of unused warning
+    } deriving (Show)
+
 type PScope = M.Map T.Text PScopeEntry
 type PScopeMap = M.Map T.Text PScope
 
-type PParserState = (PScopeMap, T.Text)
+data PParserState = PParserState 
+    { psScopes :: PScopeMap
+    , psCurrent :: T.Text
+    } deriving (Show)
+
 type PParser = ParsecT T.Text PParserState IO
 type POperatorTable a = OperatorTable T.Text PParserState IO a
 type PTokenParser = Token.GenTokenParser T.Text PParserState IO
@@ -51,30 +70,19 @@ fromTagAr _               _        = VTInt
 fromTag :: Maybe (T.Text) -> VarType
 fromTag = flip fromTagAr Nothing
 
-sePos  :: PScopeEntry -> SourcePos
-sePos  (p,_,_) = p
-
-seType :: PScopeEntry -> Type
-seType (_,t,_) = t
-
-seAss  :: PScopeEntry -> Maybe ExprAssignment
-seAss  (_,_,a) = a
-
-makeSe :: SourcePos -> Type -> Maybe ExprAssignment -> PScopeEntry
-makeSe p t a   = (p,t,a)
-
 --getAllScopes :: PParser PScopeMap
 --getAllScopes = getState >>= return . fst
 
 getScope :: T.Text -> PParser PScope
 getScope sk = do
-    (sm, _) <- getState
+    st <- getState
+    let sm = psScopes st
     case M.lookup sk sm of
         Just se -> return se
-        _ -> fail $ "Fatal: unknown `" ++ T.unpack sk ++ "` state."
+        _ -> fail $ "Fatal: unknown `" ++ T.unpack sk ++ "` scope."
 
 getCurrentScopeKey :: PParser T.Text
-getCurrentScopeKey = getState >>= return . snd
+getCurrentScopeKey = getState >>= return . psCurrent
 
 getCurrentScope :: PParser PScope
 getCurrentScope = getCurrentScopeKey >>= getScope
@@ -86,19 +94,21 @@ isGlobalScope :: PParser Bool
 isGlobalScope = getCurrentScopeKey >>= return . (==) scopeKeyGlobal
 
 modifyCurrentScope :: (PScope -> PScope) -> PParser ()
-modifyCurrentScope f = modifyState (\(sm,cs) -> (M.adjust f cs sm, cs))
+modifyCurrentScope f = modifyState (\(PParserState sm cs) -> 
+    PParserState (M.adjust f cs sm) cs)
 
 createNewScope :: T.Text -> PParser ()
-createNewScope sk = modifyState (\(sm,cs) -> (M.insert sk M.empty sm, cs))
+createNewScope sk = modifyState (\(PParserState sm cs) -> 
+    PParserState (M.insert sk M.empty sm) cs)
 
 switchScope :: T.Text -> PParser a -> PParser a
 switchScope sk p = do
-    (psm, psk) <- getState
+    PParserState psm psk <- getState
     case M.lookup sk psm of
         Just _ -> do
-            modifyState (\(sm,_) -> (sm, sk))
+            modifyState (\(PParserState sm _) -> PParserState sm sk)
             r <- p
-            modifyState (\(sm,_) -> (sm, psk))
+            modifyState (\(PParserState sm _) -> PParserState sm psk)
             return r
         _ -> fail "Fatal: switching to unknown scope"
 
@@ -145,7 +155,7 @@ forceValidateOrSetIdentifier var pos t ass = do
                       | otherwise -> putWarnLn pos $
             "W: `"++ T.unpack var ++"` is shadowing another variable from " ++ 
             show (sePos se)
-        _ -> modifyCurrentScope (M.insert var (makeSe pos t ass))
+        _ -> modifyCurrentScope (M.insert var (PScopeEntry pos t ass))
 
 forceDefined :: SourcePos -> T.Text -> (Type -> Bool) -> String -> PParser ()
 forceDefined pos var f msg = do
@@ -212,13 +222,29 @@ forceSetVariable ms var pos mtag marr mexpr = case marr of
         (Just (_, se)) <- lookupCurrentAndGlobal var
         let (TVar varType _) = seType se
         return varType
-    _ -> return $ fromTagAr mtag Nothing
+    _ -> do
+        let varType = fromTagAr mtag Nothing
+        forceValidateOrSetIdentifier var pos (TVar varType ms) mexpr
+        return varType
 
 evalIntConstExprArithmetic :: ExprArithmetic -> Maybe Int
 evalIntConstExprArithmetic (ExprInt i) = Just (fromIntegral i)
+evalIntConstExprArithmetic (ExprUnaAr op expr1) =
+        (intFromOpUnaArithmetic op)
+    <$> evalIntConstExprArithmetic expr1
 evalIntConstExprArithmetic (ExprBinAr op expr1 expr2) = 
-    (intFromOpBinArithmetic op) <$> evalIntConstExprArithmetic expr1  <*> evalIntConstExprArithmetic expr2
+        (intFromOpBinArithmetic op) 
+    <$> evalIntConstExprArithmetic expr1
+    <*> evalIntConstExprArithmetic expr2
 evalIntConstExprArithmetic _ = Nothing
+
+intFromOpUnaArithmetic :: OpUnaArithmetic -> (Int -> Int)
+intFromOpUnaArithmetic OpNegate  = (-)0
+intFromOpUnaArithmetic OpPreInc  = (+)1
+intFromOpUnaArithmetic OpPostInc = (+)1
+intFromOpUnaArithmetic OpPreDec  = (-)1
+intFromOpUnaArithmetic OpPostDec = (-)1
+intFromOpUnaArithmetic OpBNot    = complement
 
 intFromOpBinArithmetic :: OpBinArithmetic -> (Int -> Int -> Int)
 intFromOpBinArithmetic OpAdd     = (+)
@@ -303,67 +329,63 @@ brackets   = Token.brackets   lexer -- []
 programParser :: PParser Statement
 programParser = do
     whiteSpace
-    stmt <- statement
+    stmt <- stmts globalStatement
     eof
+#ifdef DebugEnabled
+    st <- getState
+    pos <- getPosition
+    putWarnLn pos $ "Debug: -> State is below\n---\n" ++ show st ++ "\n---\n"
+#endif
     return stmt
 
-statement :: PParser Statement
-statement = parens statement
-        <|> statements
-
-statements :: PParser Statement
-statements = do
-    list <- sepBy1 statement' whiteSpace
+stmts :: PParser Statement -> PParser Statement
+stmts pstmt = do
+    list <- sepBy1 pstmt whiteSpace
     return $ if length list == 1 then head list else StmtSeq list
 
-statement' :: PParser Statement
-statement' = funcStmt
-         <|> funcCallStmt
-         <|> returnStmt
-         <|> ifElseStmt
-         <|> ifStmt
-         <|> whileStmt
-         <|> doWhileStmt
-         <|> forStmt
-         <|> newStmt
-         <|> declStmt
-         <|> assignStmt
+globalStatement :: PParser Statement
+globalStatement = funcStmt
+            --  <|> funcCallStmt
+              <|> newStmt
+              <|> declStmt
+              <|> assignStmt
 
+funcStatement :: PParser Statement
+funcStatement = funcCallStmt
+            <|> returnStmt
+            <|> ifElseStmt
+            <|> whileStmt
+            <|> doWhileStmt
+            <|> forStmt
+            <|> assignStmt
+            <|> newStmt
+            <|> declStmt
 
-bracedStmt :: PParser Statement
-bracedStmt = (try $ statement') 
-         <|> braces statement
-
-ifStmt' :: PParser (ExprBoolean, Statement)
-ifStmt' = do 
-    reserved "if"
-    cond  <- parens exprBoolean
-    stmt <- bracedStmt
-    return (cond,stmt)
-
-ifStmt :: PParser Statement
-ifStmt = do 
-    (cond, stmt) <- ifStmt'
-    return $ StmtIf cond stmt
+bracedStatement :: PParser Statement
+bracedStatement = (try funcStatement)
+              <|> braces (stmts funcStatement)
 
 ifElseStmt :: PParser Statement
 ifElseStmt = do 
-    (cond, stmt1) <- ifStmt'
-    try $ reserved "else"
-    stmt2 <- bracedStmt
-    return $ StmtIfElse cond stmt1 stmt2
+    reserved "if"
+    cond  <- parens exprBoolean
+    stmt1 <- bracedStatement
+    mstmt2 <- optionMaybe (try (reserved "else" >> bracedStatement))
+    case mstmt2 of
+        Just stmt2 -> return $ StmtIfElse cond stmt1 stmt2
+        _ -> return $ StmtIf cond stmt1
     
 whileStmt :: PParser Statement
 whileStmt = do 
     reserved "while"
     cond <- parens exprBoolean
-    stmt <- bracedStmt
+    stmt <- bracedStatement
     return $ StmtWhile cond stmt
     
 doWhileStmt :: PParser Statement
 doWhileStmt = do 
     reserved "do"
-    stmt <- bracedStmt
+    stmt <- bracedStatement
     reserved "while"
     cond <- parens exprBoolean
     semicolon
@@ -378,7 +400,7 @@ forStmt = do
         semicolon
         it <- exprArithmetic
         return $ (ini, cond, it)
-    stmt <- bracedStmt
+    stmt <- bracedStatement
     return $ StmtFor ini cond it stmt
 
 assignStmt :: PParser Statement
@@ -411,7 +433,6 @@ declStmt = do
     marr <- arrayDeclaration
     semicolon
     
-    
     varType <- forceSetVariable ms var pos mtag marr Nothing
     return $ StmtDecl ms varType var
 
@@ -431,7 +452,7 @@ newStmt = do
 
 funcStmt :: PParser Statement
 funcStmt = do
-    (ms, mtag, var, args, stmt, pos) <- try $ do
+    (ms, var, args, stmt, pos, varType) <- try $ do
         ms <- funcModifiers
         mtag <- tagDeclaration
         pos <- getPosition
@@ -445,16 +466,17 @@ funcStmt = do
                 reservedOp "="
                 exprAssignment
             return $ (ams, fromTagAr matag marr, arg, expr)
+            
+        let varType = fromTag mtag
+        forceValidateOrSetIdentifier var pos (TFunc varType ms) Nothing
         
         createNewScope var
         stmt <- switchScope var $ do
-            braces statement
-        return $ (ms, mtag, var, args, stmt, pos)
-        
-    forceGlobalScope pos "E: defining function outside of global scope"
+            braces (stmts funcStatement)
+        return $ (ms, var, args, stmt, pos, varType)
     
-    let varType = fromTag mtag
-    forceValidateOrSetIdentifier var pos (TFunc varType ms) Nothing
+    forceGlobalScope pos "Fatal: defining function outside of global scope"
+    
     return $ StmtFunc ms varType var args stmt
 
 funcCallStmt :: PParser Statement
@@ -470,7 +492,7 @@ funcCallInternal = do
         var <- identifier
         expr <- parens $ commaSep exprArithmetic
         return $ (var, expr)
-    forceDefined pos var isFunc "E: unknown function"
+    forceDefined pos var isFunc $ "E: unknown function `" ++ T.unpack var ++ "`"
     return $ (var, expr)
 
 funcModifiers :: PParser FuncModifiers
