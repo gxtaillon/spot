@@ -2,6 +2,7 @@
 new a = 1;
 decl b;
 public g() { return 2; }
+h() { new u = 42; return u; }
 public f() {
     if (true) { new c = 1; }
     if (false) { c = 2; } else { d = 3; }
@@ -12,7 +13,7 @@ public f() {
     while (d<=1) 
         d=99;
     for (new i;i!=5;--i) 
-        new f = 42;
+        new f = 42%7; // Should throw a warning
     f(); // Woo!
     return g();
 }

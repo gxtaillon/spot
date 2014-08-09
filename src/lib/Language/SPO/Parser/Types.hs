@@ -8,6 +8,7 @@ module Language.SPO.Parser.Types
     , OpBinArithmetic (..)
     , OpUnaArithmetic (..)
     , ExprAssignment (..)
+    , OpAssignment (..)
     
     -- Type
     , VarType (..)
@@ -26,6 +27,7 @@ module Language.SPO.Parser.Types
     , FuncArg
     , FuncArgs
     , Statement (..)
+    , isReturnStmt
     ) where
 
 import Data.Text
@@ -72,21 +74,36 @@ data OpUnaArithmetic =
       deriving (Show)
 
 data OpBinArithmetic = 
-      OpAdd 
-    | OpSub 
-    | OpMul 
-    | OpDiv 
+      OpAdd
+    | OpSub
+    | OpMul
+    | OpDiv
+    | OpMod
     | OpBAnd
     | OpBOr
     | OpBXor
-    | OpBLShift
-    | OpBRShift
+    | OpBLS
+    | OpBRS
       deriving (Show)
 
 data ExprAssignment =
       ExprAssAr ExprArithmetic
     | ExprAssBool ExprBoolean
     | ExprAssArrayInit [ExprArithmetic]
+      deriving (Show)
+
+data OpAssignment =
+      OpAssign
+    | OpAssAdd
+    | OpAssSub
+    | OpAssMul
+    | OpAssDiv
+    | OpAssMod
+    | OpAssBAnd
+    | OpAssBOr
+    | OpAssBXor
+    | OpAssBLS
+    | OpAssBRS
       deriving (Show)
 
 data VarModifier = 
@@ -162,3 +179,7 @@ data Statement =
     | StmtFunc FuncModifiers VarType Text FuncArgs Statement
     | StmtFuncCall Text [ExprArithmetic]
       deriving (Show)
+
+isReturnStmt :: Statement -> Bool
+isReturnStmt (StmtReturn _) = True
+isReturnStmt _ = False

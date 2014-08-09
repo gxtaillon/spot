@@ -17,6 +17,7 @@ import Control.Applicative ((<$>), (<*>))
 import Control.Monad
 import Control.Monad.IO.Class (liftIO)
 import Data.Bits ((.&.), (.|.), xor, complement, shiftL, shiftR)
+import Data.List (findIndices)
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 import Text.Parsec
@@ -153,7 +154,7 @@ forceValidateOrSetIdentifier var pos t ass = do
         Just (sk, se) | sk == csk -> setPosAndFail pos $ 
             "E: redefining variable found at " ++ show (sePos se)
                       | otherwise -> putWarnLn pos $
-            "W: `"++ T.unpack var ++"` is shadowing another variable from " ++ 
+            "W: `"++ T.unpack var ++"` is shadowing another identifier from " ++ 
             show (sePos se)
         _ -> modifyCurrentScope (M.insert var (PScopeEntry pos t ass))
 
@@ -208,25 +209,6 @@ forceSetConstantArrayDeclaration ms var pos mtag marr mass = case marr of
             forceValidateOrSetIdentifier var pos (TVar varType ms) mass
         _ -> setPosAndFail pos "E: expected array size declaration"
 
-forceSetVariable 
-    :: VarModifiers
-    -> T.Text
-    -> SourcePos
-    -> Maybe T.Text
-    -> Maybe (Maybe ExprArithmetic)
-    -> Maybe ExprAssignment
-    -> PParser VarType
-forceSetVariable ms var pos mtag marr mexpr = case marr of
-    Just arr -> do
-        forceSetConstantArrayDeclaration ms var pos mtag arr mexpr
-        (Just (_, se)) <- lookupCurrentAndGlobal var
-        let (TVar varType _) = seType se
-        return varType
-    _ -> do
-        let varType = fromTagAr mtag Nothing
-        forceValidateOrSetIdentifier var pos (TVar varType ms) mexpr
-        return varType
-
 evalIntConstExprArithmetic :: ExprArithmetic -> Maybe Int
 evalIntConstExprArithmetic (ExprInt i) = Just (fromIntegral i)
 evalIntConstExprArithmetic (ExprUnaAr op expr1) =
@@ -247,15 +229,45 @@ intFromOpUnaArithmetic OpPostDec = (-)1
 intFromOpUnaArithmetic OpBNot    = complement
 
 intFromOpBinArithmetic :: OpBinArithmetic -> (Int -> Int -> Int)
-intFromOpBinArithmetic OpAdd     = (+)
-intFromOpBinArithmetic OpSub     = (-)
-intFromOpBinArithmetic OpMul     = (*)
-intFromOpBinArithmetic OpDiv     = div
-intFromOpBinArithmetic OpBAnd    = (.&.)
-intFromOpBinArithmetic OpBOr     = (.|.)
-intFromOpBinArithmetic OpBXor    = xor
-intFromOpBinArithmetic OpBLShift = shiftL
-intFromOpBinArithmetic OpBRShift = shiftR
+intFromOpBinArithmetic OpAdd  = (+)
+intFromOpBinArithmetic OpSub  = (-)
+intFromOpBinArithmetic OpMul  = (*)
+intFromOpBinArithmetic OpDiv  = div
+intFromOpBinArithmetic OpMod  = mod
+intFromOpBinArithmetic OpBAnd = (.&.)
+intFromOpBinArithmetic OpBOr  = (.|.)
+intFromOpBinArithmetic OpBXor = xor
+intFromOpBinArithmetic OpBLS  = shiftL
+intFromOpBinArithmetic OpBRS  = shiftR
+
+forceSetVariable 
+    :: VarModifiers
+    -> T.Text
+    -> SourcePos
+    -> Maybe T.Text
+    -> Maybe (Maybe ExprArithmetic)
+    -> Maybe ExprAssignment
+    -> PParser VarType
+forceSetVariable ms var pos mtag marr mexpr = case marr of
+    Just arr -> do
+        forceSetConstantArrayDeclaration ms var pos mtag arr mexpr
+        (Just (_, se)) <- lookupCurrentAndGlobal var
+        let (TVar varType _) = seType se
+        return varType
+    _ -> do
+        let varType = fromTagAr mtag Nothing
+        forceValidateOrSetIdentifier var pos (TVar varType ms) mexpr
+        return varType
+
+forceReturn :: SourcePos -> Statement -> PParser ()
+forceReturn pos (StmtSeq ss) = case findIndices isReturnStmt ss of
+    [] -> setPosAndFail pos "E: expected return statement in function"
+    [i] | i /= (length ss-1) -> setPosAndFail pos ("E: unreachable code " ++
+                                                   "following return statement")
+        | otherwise -> return ()
+    _ -> setPosAndFail pos "E: multiple return statements in function"
+forceReturn _ (StmtReturn _) = return ()
+forceReturn pos _ = setPosAndFail pos "E: expected return statement in function"
 
 langDef :: PLanguageDef
 langDef = Token.LanguageDef
@@ -293,7 +305,7 @@ identifier      :: PParser T.Text
 identifier      = Token.identifier lexer >>= return . T.pack
 
 reserved        :: String -> PParser ()
-reserved        = Token.reserved   lexer
+reserved        = Token.reserved lexer
 
 reservedOp      :: String -> PParser ()
 reservedOp      = Token.reservedOp lexer
@@ -305,25 +317,25 @@ stringLiteral   :: PParser T.Text
 stringLiteral   = Token.stringLiteral lexer >>= return . T.pack
 
 symbol          :: String -> PParser String
-symbol          = Token.symbol     lexer
+symbol          = Token.symbol lexer
 
 integer         :: PParser Integer
-integer         = Token.integer    lexer
+integer         = Token.integer lexer
 
 semicolon       :: PParser ()
-semicolon       = Token.semi       lexer >> return ()
+semicolon       = Token.semi lexer >> return ()
 
 whiteSpace      :: PParser ()
 whiteSpace      = Token.whiteSpace lexer
 
 commaSep        :: PParser a -> PParser [a]
-commaSep        = Token.commaSep   lexer
+commaSep        = Token.commaSep lexer
 
 parens, braces ,{- angles,  -} brackets :: forall a. PParser a -> PParser a
-parens     = Token.parens     lexer -- ()
-braces     = Token.braces     lexer -- {}
---angles     = Token.angles     lexer -- <>
-brackets   = Token.brackets   lexer -- []
+parens     = Token.parens lexer -- ()
+braces     = Token.braces lexer -- {}
+--angles     = Token.angles lexer -- <>
+brackets   = Token.brackets lexer -- []
 
 
 programParser :: PParser Statement
@@ -475,6 +487,7 @@ funcStmt = do
             braces (stmts funcStatement)
         return $ (ms, var, args, stmt, pos, varType)
     
+    forceReturn pos stmt
     forceGlobalScope pos "Fatal: defining function outside of global scope"
     
     return $ StmtFunc ms varType var args stmt
@@ -554,6 +567,7 @@ opArithmetic =
     , [Postfix (reservedOp "++" >> return (ExprUnaAr OpPostInc))          ]
     , [Prefix  (reservedOp "--" >> return (ExprUnaAr OpPreDec))           ]
     , [Postfix (reservedOp "--" >> return (ExprUnaAr OpPostDec))          ]
+    , [Infix   (reservedOp "%"  >> return (ExprBinAr OpMod))     AssocLeft]
     , [Infix   (reservedOp "*"  >> return (ExprBinAr OpMul))     AssocLeft]
     , [Infix   (reservedOp "/"  >> return (ExprBinAr OpDiv))     AssocLeft]
     , [Infix   (reservedOp "+"  >> return (ExprBinAr OpAdd))     AssocLeft]
@@ -561,8 +575,8 @@ opArithmetic =
     , [Infix   (reservedOp "&"  >> return (ExprBinAr OpBAnd))    AssocLeft]
     , [Infix   (reservedOp "|"  >> return (ExprBinAr OpBOr))     AssocLeft]
     , [Infix   (reservedOp "^"  >> return (ExprBinAr OpBXor))    AssocLeft]
-    , [Infix   (reservedOp "<<" >> return (ExprBinAr OpBLShift)) AssocLeft]
-    , [Infix   (reservedOp ">>" >> return (ExprBinAr OpBRShift)) AssocLeft]
+    , [Infix   (reservedOp "<<" >> return (ExprBinAr OpBLS)) AssocLeft]
+    , [Infix   (reservedOp ">>" >> return (ExprBinAr OpBRS)) AssocLeft]
     ]
 
 termArithmetic :: PParser ExprArithmetic
