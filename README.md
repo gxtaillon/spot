@@ -2,7 +2,7 @@ SourcePawn Object
 ====
 
 <a href="https://hackage.haskell.org/package/parsec">
- <img src="http://www.cs.uu.nl/~daan/images/parsec.gif"
+ <img src="http://cdn.taillon.co/e7f08e7e/parsec.gif"
       alt="Parsec logo" hspace=20 border=0
       style="float: right; border: none; padding-left: 4pt">
 </a>
