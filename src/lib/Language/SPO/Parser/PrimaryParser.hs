@@ -59,17 +59,37 @@ type PLanguageDef = Token.GenLanguageDef T.Text PParserState IO
 
 type ArrayDeclarationInternal = (Maybe (Maybe ExprArithmetic))
 
-fromTagAr :: Maybe (T.Text) -> Maybe (Maybe Int) -> VarType
-fromTagAr t               (Just s) = VTArray (fromTag t) s
-fromTagAr (Just "_")      _        = VT_
-fromTagAr (Just "Float")  _        = VTFloat
-fromTagAr (Just "Bool")   _        = VTBool
-fromTagAr (Just "Char")   _        = VTChar
-fromTagAr (Just u)        _        = VTUser u
-fromTagAr _               _        = VTInt
+fromTagAr :: SourcePos -> Maybe (T.Text) -> Maybe (Maybe Int) -> PParser VarType
+fromTagAr pos (Just "String") (Just s)  = do
+                                            putWarnLn pos $ 
+                                              "W: For backwards " ++
+                                              "compatibility reasons, String" ++
+                                              " arrays are interpreted as " ++
+                                              "Char arrays."
+                                            return $ VTArray VTChar s
+fromTagAr pos (Just "String") (Nothing) = do
+                                            putWarnLn pos $ 
+                                              "W: For backwards " ++
+                                              "compatibility reasons, String" ++
+                                              " arrays are interpreted as " ++
+                                              "Char arrays."
+                                            return $ VTArray VTChar Nothing
+fromTagAr pos t               (Just s)  = do 
+                                            tag <- fromTag pos t
+                                            return $ VTArray tag s
+fromTagAr _   (Just "_")      _         = return $ VT_
+fromTagAr _   (Just "Int")    _         = return $ VTInt
+fromTagAr _   (Just "Float")  _         = return $ VTFloat
+fromTagAr _   (Just "Bool")   _         = return $ VTBool
+fromTagAr _   (Just "Char")   _         = return $ VTChar
+fromTagAr _   (Just u)        _         = return $ VTUser u
+fromTagAr pos _               _         = do
+                                            putWarnLn pos $ "W: No tags were" ++
+                                              " found, defaulting to Int."
+                                            return $ VTInt
 
-fromTag :: Maybe (T.Text) -> VarType
-fromTag = flip fromTagAr Nothing
+fromTag :: SourcePos -> Maybe (T.Text) -> PParser VarType
+fromTag pos t = fromTagAr pos t Nothing
 
 --getAllScopes :: PParser PScopeMap
 --getAllScopes = getState >>= return . fst
@@ -179,8 +199,8 @@ forceSetConstantArrayDeclaration ms var pos mtag marr mass = case marr of
         Just size -> do
             when (size < 1) $
                 setPosAndFail pos "E: array declared size is less than 1"
-            let varType = fromTagAr mtag (Just $ Just size)
-                typ = TVar varType ms
+            varType <- fromTagAr pos mtag (Just $ Just size)
+            let typ = TVar varType ms
             case mass of
                 Just ass -> do
                     exprSize <- case ass of
@@ -205,7 +225,7 @@ forceSetConstantArrayDeclaration ms var pos mtag marr mass = case marr of
                 ExprAssAr (ExprString str) -> return $ T.length str
                 _ -> setPosAndFail pos "E: expected array initializer" 
                     >> return 0
-            let varType = fromTagAr mtag (Just $ Just $ exprSize)
+            varType <- fromTagAr pos mtag (Just $ Just $ exprSize)
             forceValidateOrSetIdentifier var pos (TVar varType ms) mass
         _ -> setPosAndFail pos "E: expected array size declaration"
 
@@ -255,7 +275,7 @@ forceSetVariable ms var pos mtag marr mexpr = case marr of
         let (TVar varType _) = seType se
         return varType
     _ -> do
-        let varType = fromTagAr mtag Nothing
+        varType <- fromTagAr pos mtag Nothing
         forceValidateOrSetIdentifier var pos (TVar varType ms) mexpr
         return varType
 
@@ -366,6 +386,7 @@ funcStatement :: PParser Statement
 funcStatement = funcCallStmt
             <|> returnStmt
             <|> ifElseStmt
+            <|> ifStmt
             <|> whileStmt
             <|> doWhileStmt
             <|> forStmt
@@ -377,15 +398,26 @@ bracedStatement :: PParser Statement
 bracedStatement = (try funcStatement)
               <|> braces (stmts funcStatement)
 
+ifStmt :: PParser Statement
+ifStmt = do 
+    (cond, stmt1) <- try $ do
+        reserved "if"
+        cond  <- parens exprBoolean
+        stmt1 <- bracedStatement
+        return $ (cond, stmt1)
+        
+    return $ StmtIf cond stmt1
+    
 ifElseStmt :: PParser Statement
 ifElseStmt = do 
-    reserved "if"
-    cond  <- parens exprBoolean
-    stmt1 <- bracedStatement
-    mstmt2 <- optionMaybe (try (reserved "else" >> bracedStatement))
-    case mstmt2 of
-        Just stmt2 -> return $ StmtIfElse cond stmt1 stmt2
-        _ -> return $ StmtIf cond stmt1
+    (cond, stmt1) <- try $ do
+        reserved "if"
+        cond  <- parens exprBoolean
+        stmt1 <- bracedStatement
+        reserved "else"
+        return $ (cond, stmt1)
+    stmt2 <- bracedStatement
+    return $ StmtIfElse cond stmt1 stmt2
     
 whileStmt :: PParser Statement
 whileStmt = do 
@@ -417,11 +449,16 @@ forStmt = do
 
 assignStmt :: PParser Statement
 assignStmt = do 
-    var <- identifier
-    marr <- arrayDeclaration
-    reservedOp "="
-    expr <- exprAssignment
-    _ <- semicolon
+    (pos, var, marr, expr) <- try $ do
+        pos <- getPosition
+        var <- identifier
+        marr <- arrayDeclaration
+        reservedOp "="
+        expr <- exprAssignment
+        _ <- semicolon
+        return $ (pos, var, marr, expr)
+        
+    forceDefined pos var isVariable $ "E: unknown var `" ++ T.unpack var ++ "`"
     case marr of 
         Just arr -> case arr of 
             Just exprIdx -> return $ StmtIndex var exprIdx expr
@@ -472,14 +509,16 @@ funcStmt = do
         args <- parens $ commaSep $ do
             ams <- funcArgModifiers
             matag <- tagDeclaration
+            argpos <- getPosition
             arg <- identifier
             marr <- optionMaybe $ symbol "[]" >> return Nothing
             expr <- optionMaybe $ do
                 reservedOp "="
                 exprAssignment
-            return $ (ams, fromTagAr matag marr, arg, expr)
+            varargs <- fromTagAr argpos matag marr
+            return $ (ams, varargs, arg, expr)
             
-        let varType = fromTag mtag
+        varType <- fromTag pos mtag
         forceValidateOrSetIdentifier var pos (TFunc varType ms) Nothing
         
         createNewScope var

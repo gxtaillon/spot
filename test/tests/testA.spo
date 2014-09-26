@@ -1,11 +1,13 @@
 // Nonsensical code to test the parser-compiler.
-new a = 1;
-decl b;
-public g() { return 2; }
-h() { new u = 42; return u; }
-public f() {
-    if (true) { new c = 1; }
-    if (false) { c = 2; } else { d = 3; }
+new Int:a = 1;
+decl Int:b;
+public Int:g() { return 2; }
+Int:h() { new Int:u = 42; return u; }
+public Int:f() {
+    decl Int:c;
+    decl Int:d;
+    if (true) { c = 1; }
+    if (false) { c = 2; } else { c=3; d = 3; }
     do {
         d = d + 1;
         d = d + 1; }
