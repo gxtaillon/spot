@@ -6,12 +6,12 @@ module Language.SPO.Parser.PrimaryParser
 -- TODO Get rid of `IO`, carry warnings and other messages around 
 --      before displaying them.
 
--- NB   Warnings are shown for code that should be modified but will compile
---      Errors, for code that will not compile
+-- NB   Warnings are shown for code that should be modified but will compile.
+--      Errors, for code that will not compile.
 --      Fatal errors, for internal cases that can not or have not be made
 --       impossible by the type system. For any given input they should never
 --       appear to the user. A Fatal indicates that something inside the
---       compiler is not behaving correctly.
+--       compiler is not behaving correctly. 
 
 import Control.Applicative ((<$>), (<*>))
 import Control.Monad
