@@ -3,5 +3,7 @@ forward abc:f(const asv:a[]) { decl x; }
 new a = z[z]<z;
 new d = f(1,f(a[a]));
 g(a) { return f(); }
-forward h() { decl y; g(); }
-for (new i=0; a<10; ++i) f('a');
+forward h() { 
+    decl y; g(); 
+    for (new i=0; a<10; ++i) f('a'); 
+}

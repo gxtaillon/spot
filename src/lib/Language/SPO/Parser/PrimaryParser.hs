@@ -300,7 +300,7 @@ langDef = Token.LanguageDef
     , Token.opStart         = Token.opLetter langDef
     , Token.opLetter        = oneOf ":!#$%&*+./<=>?@\\^|-~"
     , Token.reservedNames   = [ "if", "else"
-                              , "while", "do"
+                              , "while", "do", "for"
                               , "true", "false"
                               , "native", "public", "normal", "static", "stock"
                               ,     "forward"
