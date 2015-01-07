@@ -281,13 +281,13 @@ forceSetVariable ms var pos mtag marr mexpr = case marr of
 
 forceReturn :: SourcePos -> Statement -> PParser ()
 forceReturn pos (StmtSeq ss) = case findIndices isReturnStmt ss of
-    [] -> setPosAndFail pos "E: expected return statement in function"
+    [] -> putWarnLn pos "W: no return statement in function"
     [i] | i /= (length ss-1) -> setPosAndFail pos ("E: unreachable code " ++
                                                    "following return statement")
         | otherwise -> return ()
     _ -> setPosAndFail pos "E: multiple return statements in function"
 forceReturn _ (StmtReturn _) = return ()
-forceReturn pos _ = setPosAndFail pos "E: expected return statement in function"
+forceReturn pos _ = putWarnLn pos "W: no return statement in function"
 
 langDef :: PLanguageDef
 langDef = Token.LanguageDef
